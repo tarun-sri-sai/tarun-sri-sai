@@ -1,7 +1,10 @@
 const fetch = require('node-fetch');
+const NodeCache = require('node-cache');
 
 const API_URL = process.env.GITHUB_API_URL || 'https://api.github.com/graphql';
 const API_VERSION = process.env.GITHUB_API_VERSION || '2022-11-28';
+
+const cache = new NodeCache({ stdTTL: 604800 });
 
 async function makeGraphQLRequest(query, variables, token) {
   const response = await fetch(API_URL, {
@@ -23,7 +26,7 @@ async function makeGraphQLRequest(query, variables, token) {
   return data.data;
 }
 
-async function getRepositories(username, token, top = 100) {
+async function _getRepositories(username, token, top = 100) {
   const query = `
     query($username: String!) {
       user(login: $username) {
@@ -40,9 +43,9 @@ async function getRepositories(username, token, top = 100) {
   return data.user.repositories.nodes.map(repo => repo.name);
 }
 
-async function getCommitsLastYear(username, token) {
+async function _getCommitsLastYear(username, token) {
   try {
-    const repos = await getRepositories(username, token);
+    const repos = await _getRepositories(username, token);
     
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - 365);
@@ -88,9 +91,9 @@ async function getCommitsLastYear(username, token) {
   }
 }
 
-async function getTopLanguages(username, token, top = 10) {
+async function _getTopLanguages(username, token, top = 10) {
   try {
-    const repos = await getRepositories(username, token);
+    const repos = await _getRepositories(username, token);
 
     const languageStats = {};
     let totalSize = 0;
@@ -152,9 +155,9 @@ async function getTopLanguages(username, token, top = 10) {
   }
 }
 
-async function getTopRepositories(username, token) {
+async function _getTopRepositories(username, token) {
   try {
-    const repos = await getRepositories(username, token);
+    const repos = await _getRepositories(username, token);
     const repoStats = [];
 
     for (const repo of repos) {
@@ -204,8 +207,43 @@ async function getTopRepositories(username, token) {
 }
 
 module.exports = {
-  getCommitsLastYear,
-  getTopLanguages,
-  getTopRepositories,
-  getRepositories
+  getCommitsLastYear: async (username, token, ...args) => {
+    const cacheKey = `commits:${username}`;
+    const cached = cache.get(cacheKey);
+    if (cached !== undefined) return cached;
+    
+    const result = await _getCommitsLastYear(username, token, ...args);
+    cache.set(cacheKey, result);
+    return result;
+  },
+  
+  getTopLanguages: async (username, token, top = 10) => {
+    const cacheKey = `languages:${username}:${top}`;
+    const cached = cache.get(cacheKey);
+    if (cached !== undefined) return cached;
+    
+    const result = await _getTopLanguages(username, token, top);
+    cache.set(cacheKey, result);
+    return result;
+  },
+  
+  getTopRepositories: async (username, token) => {
+    const cacheKey = `topRepos:${username}`;
+    const cached = cache.get(cacheKey);
+    if (cached !== undefined) return cached;
+    
+    const result = await _getTopRepositories(username, token);
+    cache.set(cacheKey, result);
+    return result;
+  },
+  
+  getRepositories: async (username, token, top = 100) => {
+    const cacheKey = `repos:${username}:${top}`;
+    const cached = cache.get(cacheKey);
+    if (cached !== undefined) return cached;
+    
+    const result = await _getRepositories(username, token, top);
+    cache.set(cacheKey, result);
+    return result;
+  }
 };
