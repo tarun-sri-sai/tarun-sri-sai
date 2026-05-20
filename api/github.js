@@ -29,7 +29,7 @@ async function _getRepositories(username, token, top = 100) {
   const query = `
     query($username: String!) {
       user(login: $username) {
-        repositories(first: ${top}, affiliations: OWNER) {
+        repositories(first: ${top}, affiliations: OWNER, visibility: PUBLIC) {
           nodes {
             name
           }
