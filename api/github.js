@@ -1,31 +1,30 @@
-const NodeCache = require('node-cache');
+const { cached } = require("./cache");
 
-const API_URL = process.env.GITHUB_API_URL || 'https://api.github.com/graphql';
-const API_VERSION = process.env.GITHUB_API_VERSION || '2022-11-28';
+const API_URL = process.env.GITHUB_API_URL || "https://api.github.com/graphql";
+const API_VERSION = process.env.GITHUB_API_VERSION || "2022-11-28";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-const cache = new NodeCache({ stdTTL: 604800 });
-
-async function makeGraphQLRequest(query, variables, token) {
+const makeGraphQLRequest = async (query, variables) => {
   const response = await fetch(API_URL, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-GitHub-Api-Version': API_VERSION,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${GITHUB_TOKEN}`,
+      "X-GitHub-Api-Version": API_VERSION,
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({ query, variables })
+    body: JSON.stringify({ query, variables }),
   });
 
-  const data = await response.json();
-
-  if (data.errors) {
-    throw new Error(`GitHub API error: ${data.errors.map(e => e.message).join(', ')}`);
+  const responseBody = await response.json();
+  if (responseBody.errors) {
+    const errors = JSON.stringify(responseBody.errors.map((e) => e.message));
+    throw new Error(`github graphql error: ${errors}`);
   }
 
-  return data.data;
-}
+  return responseBody.data;
+};
 
-async function _getRepositories(username, token, top = 100) {
+const getRepositories = async (username, top = 100) => {
   const query = `
     query($username: String!) {
       user(login: $username) {
@@ -38,14 +37,14 @@ async function _getRepositories(username, token, top = 100) {
     }
   `;
 
-  const data = await makeGraphQLRequest(query, { username }, token);
-  return data.user.repositories.nodes.map(repo => repo.name);
-}
+  const data = await makeGraphQLRequest(query, { username });
+  return data.user.repositories.nodes.map((repo) => repo.name);
+};
 
-async function _getCommitsLastYear(username, token) {
+const getCommitsLastYear = async (username) => {
   try {
-    const repos = await _getRepositories(username, token);
-    
+    const repos = await cached(getRepositories)(username);
+
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - 365);
     const sinceDate = fromDate.toISOString();
@@ -70,14 +69,15 @@ async function _getCommitsLastYear(username, token) {
       `;
 
       try {
-        const data = await makeGraphQLRequest(
-          query,
-          { owner: username, name: repo, since: sinceDate },
-          token
-        );
+        const data = await makeGraphQLRequest(query, {
+          owner: username,
+          name: repo,
+          since: sinceDate,
+        });
 
         if (data.repository?.defaultBranchRef?.target?.history) {
-          totalCommits += data.repository.defaultBranchRef.target.history.totalCount;
+          totalCommits +=
+            data.repository.defaultBranchRef.target.history.totalCount;
         }
       } catch (error) {
         console.error(`error fetching commits for ${repo}:`, error.message);
@@ -88,11 +88,11 @@ async function _getCommitsLastYear(username, token) {
   } catch (error) {
     throw new Error(`failed to get commits: ${error.message}`);
   }
-}
+};
 
-async function _getTopLanguages(username, token, top = 10) {
+const getTopLanguages = async (username, top = 10) => {
   try {
-    const repos = await _getRepositories(username, token);
+    const repos = await cached(getRepositories)(username);
 
     const languageStats = {};
     let totalSize = 0;
@@ -115,19 +115,18 @@ async function _getTopLanguages(username, token, top = 10) {
       `;
 
       try {
-        const data = await makeGraphQLRequest(
-          query,
-          { owner: username, name: repo },
-          token
-        );
+        const data = await makeGraphQLRequest(query, {
+          owner: username,
+          name: repo,
+        });
 
         if (data.repository?.languages) {
           totalSize += data.repository.languages.totalSize;
-          
-          data.repository.languages.edges.forEach(edge => {
+
+          data.repository.languages.edges.forEach((edge) => {
             const language = edge.node.name;
             const size = edge.size;
-            
+
             if (!languageStats[language]) {
               languageStats[language] = 0;
             }
@@ -143,7 +142,7 @@ async function _getTopLanguages(username, token, top = 10) {
       .map(([name, size]) => ({
         name,
         bytes: size,
-        percentage: totalSize > 0 ? ((size / totalSize) * 100).toFixed(2) : 0
+        percentage: totalSize > 0 ? ((size / totalSize) * 100).toFixed(2) : 0,
       }))
       .sort((a, b) => b.bytes - a.bytes)
       .slice(0, 10);
@@ -152,13 +151,13 @@ async function _getTopLanguages(username, token, top = 10) {
   } catch (error) {
     throw new Error(`failed to get languages: ${error.message}`);
   }
-}
+};
 
-async function _getTopRepositories(username, token) {
+const getTopRepositories = async (username) => {
   try {
-    const repos = await _getRepositories(username, token);
-    const repoStats = [];
+    const repos = await cached(getRepositories)(username);
 
+    const repoStats = [];
     for (const repo of repos) {
       const query = `
         query($owner: String!, $name: String!) {
@@ -177,72 +176,39 @@ async function _getTopRepositories(username, token) {
       `;
 
       try {
-        const data = await makeGraphQLRequest(
-          query,
-          { owner: username, name: repo },
-          token
-        );
+        const data = await makeGraphQLRequest(query, {
+          owner: username,
+          name: repo,
+        });
 
-        const commitCount = data.repository?.defaultBranchRef?.target?.history?.totalCount || 0;
+        const commitCount =
+          data.repository?.defaultBranchRef?.target?.history?.totalCount || 0;
         repoStats.push({
           name: repo,
-          commits: commitCount
+          commits: commitCount,
         });
       } catch (error) {
-        console.error(`error fetching commit count for ${repo}:`, error.message);
+        console.error(
+          `error fetching commit count for ${repo}:`,
+          error.message,
+        );
         repoStats.push({
           name: repo,
-          commits: 0
+          commits: 0,
         });
       }
     }
 
-    return repoStats
-      .sort((a, b) => b.commits - a.commits)
-      .slice(0, 5);
+    return repoStats.sort((a, b) => b.commits - a.commits).slice(0, 5);
   } catch (error) {
     throw new Error(`failed to get repositories: ${error.message}`);
   }
-}
+};
 
 module.exports = {
-  getCommitsLastYear: async (username, token, ...args) => {
-    const cacheKey = `commits:${username}`;
-    const cached = cache.get(cacheKey);
-    if (cached !== undefined) return cached;
-    
-    const result = await _getCommitsLastYear(username, token, ...args);
-    cache.set(cacheKey, result);
-    return result;
-  },
-  
-  getTopLanguages: async (username, token, top = 10) => {
-    const cacheKey = `languages:${username}:${top}`;
-    const cached = cache.get(cacheKey);
-    if (cached !== undefined) return cached;
-    
-    const result = await _getTopLanguages(username, token, top);
-    cache.set(cacheKey, result);
-    return result;
-  },
-  
-  getTopRepositories: async (username, token) => {
-    const cacheKey = `topRepos:${username}`;
-    const cached = cache.get(cacheKey);
-    if (cached !== undefined) return cached;
-    
-    const result = await _getTopRepositories(username, token);
-    cache.set(cacheKey, result);
-    return result;
-  },
-  
-  getRepositories: async (username, token, top = 100) => {
-    const cacheKey = `repos:${username}:${top}`;
-    const cached = cache.get(cacheKey);
-    if (cached !== undefined) return cached;
-    
-    const result = await _getRepositories(username, token, top);
-    cache.set(cacheKey, result);
-    return result;
-  }
+  getCommitsLastYear: cached(getCommitsLastYear),
+
+  getTopLanguages: cached(getTopLanguages),
+
+  getTopRepositories: cached(getTopRepositories),
 };
