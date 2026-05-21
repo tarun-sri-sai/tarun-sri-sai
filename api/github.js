@@ -4,18 +4,29 @@ const API_URL = process.env.GITHUB_API_URL || "https://api.github.com/graphql";
 const API_VERSION = process.env.GITHUB_API_VERSION || "2022-11-28";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
+const isAuthenticated = !!GITHUB_TOKEN;
+
 const makeGraphQLRequest = async (query, variables) => {
+  const headers = isAuthenticated
+    ? {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        "X-GitHub-Api-Version": API_VERSION,
+        "Content-Type": "application/json",
+      }
+    : {
+        "X-GitHub-Api-Version": API_VERSION,
+        "Content-Type": "application/json",
+      };
   const response = await fetch(API_URL, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${GITHUB_TOKEN}`,
-      "X-GitHub-Api-Version": API_VERSION,
-      "Content-Type": "application/json",
-    },
+    headers: headers,
     body: JSON.stringify({ query, variables }),
   });
 
   const responseBody = await response.json();
+  if (!response.ok || responseBody.message) {
+    throw new Error(responseBody.message || `http ${response.status}`);
+  }
   if (responseBody.errors) {
     const errors = JSON.stringify(responseBody.errors.map((e) => e.message));
     throw new Error(`github graphql error: ${errors}`);
@@ -25,10 +36,11 @@ const makeGraphQLRequest = async (query, variables) => {
 };
 
 const getRepositories = async (username, top = 100) => {
+  const affiliation = isAuthenticated ? ", affiliations: OWNER" : "";
   const query = `
     query($username: String!) {
       user(login: $username) {
-        repositories(first: ${top}, affiliations: OWNER, visibility: PUBLIC) {
+        repositories(first: ${top}${affiliation}, visibility: PUBLIC) {
           nodes {
             name
           }
