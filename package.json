@@ -21,6 +21,6 @@
     "node-cache": "^5.1.2"
   },
   "engines": {
-    "node": "24.x"
+    "node": "20.x"
   }
 }
