@@ -15,7 +15,7 @@ const cached = (fn) => {
     cache.set(key, result);
     return result;
   };
-}
+};
 
 module.exports = {
   cached,
