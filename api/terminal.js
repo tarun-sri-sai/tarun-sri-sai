@@ -26,8 +26,10 @@ const exportGif = async (lines = []) => {
       textColor: "#7ee787",
       cursorColor: "#7ee787",
 
-      frameDelay: 45,
+      frameDelay: 60,
       quality: 10,
+
+      framesPerChar: 2,
     };
 
     const measureCanvas = createCanvas(1, 1);
@@ -89,7 +91,10 @@ const exportGif = async (lines = []) => {
     let currentLine = 0;
     let currentChar = 0;
 
-    const totalFrames = lines.join("").length * 3 + 80;
+    const totalChars = lines.join("").length;
+
+    const totalFrames =
+      totalChars * config.framesPerChar + 40;
 
     for (let frame = 0; frame < totalFrames; frame++) {
       ctx.fillStyle = config.bg;
@@ -133,16 +138,18 @@ const exportGif = async (lines = []) => {
         );
       }
 
-      currentChar++;
+      if (frame % config.framesPerChar === 0) {
+        currentChar++;
 
-      if (currentChar > (lines[currentLine]?.length || 0)) {
-        currentLine++;
-        currentChar = 0;
-      }
+        if (currentChar > (lines[currentLine]?.length || 0)) {
+          currentLine++;
+          currentChar = 0;
+        }
 
-      if (currentLine >= lines.length) {
-        currentLine = lines.length - 1;
-        currentChar = lines[currentLine].length;
+        if (currentLine >= lines.length) {
+          currentLine = lines.length - 1;
+          currentChar = lines[currentLine].length;
+        }
       }
 
       encoder.addFrame(ctx);
