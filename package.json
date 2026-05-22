@@ -13,8 +13,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "canvas": "^3.2.3",
     "express": "^5.2.1",
     "fast-json-stable-stringify": "^2.1.0",
+    "gifencoder": "^2.0.1",
+    "luxon": "^3.7.2",
     "node-cache": "^5.1.2"
   },
   "engines": {

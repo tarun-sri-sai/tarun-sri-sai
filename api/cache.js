@@ -1,8 +1,11 @@
 const NodeCache = require("node-cache");
 const crypto = require("crypto");
 const stringify = require("fast-json-stable-stringify");
+const { Duration } = require("luxon");
 
-const cache = new NodeCache({ stdTTL: 604800 });
+const CACHE_TTL = Duration.fromObject({ days: 7 });
+
+const cache = new NodeCache({ stdTTL: CACHE_TTL.as("seconds") });
 
 const cached = (fn) => {
   return async (...args) => {
@@ -24,4 +27,5 @@ const cached = (fn) => {
 
 module.exports = {
   cached,
+  CACHE_TTL,
 };

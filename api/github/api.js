@@ -1,15 +1,16 @@
-const { cached } = require("./cache");
+const { cached } = require("../cache");
 
 const API_URL = process.env.GITHUB_API_URL || "https://api.github.com/graphql";
 const API_VERSION = process.env.GITHUB_API_VERSION || "2022-11-28";
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const API_KEY = process.env.GITHUB_TOKEN;
+const USERNAME = process.env.GITHUB_USERNAME;
 
-const isAuthenticated = !!GITHUB_TOKEN;
+const isAuthenticated = !!API_KEY;
 
 const makeGraphQLRequest = async (query, variables) => {
   const headers = isAuthenticated
     ? {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Authorization: `Bearer ${API_KEY}`,
         "X-GitHub-Api-Version": API_VERSION,
         "Content-Type": "application/json",
       }
@@ -35,7 +36,7 @@ const makeGraphQLRequest = async (query, variables) => {
   return responseBody.data;
 };
 
-const getRepositories = async (username, top = 100) => {
+const getRepositories = async (top = 100) => {
   const affiliation = isAuthenticated ? ", affiliations: OWNER" : "";
   const query = `
     query($username: String!) {
@@ -49,13 +50,13 @@ const getRepositories = async (username, top = 100) => {
     }
   `;
 
-  const data = await makeGraphQLRequest(query, { username });
+  const data = await makeGraphQLRequest(query, { username: USERNAME });
   return data.user.repositories.nodes.map((repo) => repo.name);
 };
 
-const getCommitsLastYear = async (username) => {
+const getCommitsLastYear = async () => {
   try {
-    const repos = await cached(getRepositories)(username);
+    const repos = await cached(getRepositories)();
 
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - 365);
@@ -82,7 +83,7 @@ const getCommitsLastYear = async (username) => {
 
       try {
         const data = await makeGraphQLRequest(query, {
-          owner: username,
+          owner: USERNAME,
           name: repo,
           since: sinceDate,
         });
@@ -102,18 +103,18 @@ const getCommitsLastYear = async (username) => {
   }
 };
 
-const getTopLanguages = async (username, top = 10) => {
+const getTopLanguages = async (top = 10) => {
   try {
-    const repos = await cached(getRepositories)(username);
+    const repos = await cached(getRepositories)();
 
     const languageStats = {};
     let totalSize = 0;
 
     for (const repo of repos) {
       const query = `
-        query($owner: String!, $name: String!) {
+        query($owner: String!, $name: String!, $top: Int!) {
           repository(owner: $owner, name: $name) {
-            languages(first: ${top}, orderBy: {field: SIZE, direction: DESC}) {
+            languages(first: $top, orderBy: {field: SIZE, direction: DESC}) {
               totalSize
               edges {
                 size
@@ -128,8 +129,9 @@ const getTopLanguages = async (username, top = 10) => {
 
       try {
         const data = await makeGraphQLRequest(query, {
-          owner: username,
+          owner: USERNAME,
           name: repo,
+          top,
         });
 
         if (data.repository?.languages) {
@@ -165,9 +167,9 @@ const getTopLanguages = async (username, top = 10) => {
   }
 };
 
-const getTopRepositories = async (username) => {
+const getTopRepositories = async (top = 5) => {
   try {
-    const repos = await cached(getRepositories)(username);
+    const repos = await cached(getRepositories)();
 
     const repoStats = [];
     for (const repo of repos) {
@@ -189,7 +191,7 @@ const getTopRepositories = async (username) => {
 
       try {
         const data = await makeGraphQLRequest(query, {
-          owner: username,
+          owner: USERNAME,
           name: repo,
         });
 
@@ -211,7 +213,7 @@ const getTopRepositories = async (username) => {
       }
     }
 
-    return repoStats.sort((a, b) => b.commits - a.commits).slice(0, 5);
+    return repoStats.sort((a, b) => b.commits - a.commits).slice(0, top);
   } catch (error) {
     throw new Error(`failed to get repositories: ${error.message}`);
   }

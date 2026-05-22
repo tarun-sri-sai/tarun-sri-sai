@@ -1,9 +1,11 @@
 const express = require("express");
 const {
-  getCommitsLastYear,
-  getTopLanguages,
-  getTopRepositories,
-} = require("./github");
+  getCommitsLastYearText,
+  getTopLanguagesText,
+  getTopRepositoriesText,
+} = require("./github/text");
+const { exportGif } = require("./terminal");
+const { CACHE_TTL } = require("./cache");
 
 const app = express();
 
@@ -13,12 +15,18 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-const USERNAME = process.env.GITHUB_USERNAME;
+const getGifHeaders = (bufferLength) => ({
+  "Content-Type": "image/gif",
+  "Cache-Control": `max-age=${CACHE_TTL.as("seconds")}`,
+  "Content-Length": bufferLength,
+});
 
 app.get("/api/commits-last-year", async (req, res) => {
   try {
-    const commits = await getCommitsLastYear(USERNAME);
-    res.json({ commits });
+    const text = await getCommitsLastYearText();
+    const buffer = await exportGif(text);
+    res.set(getGifHeaders(buffer.length));
+    res.send(buffer);
   } catch (error) {
     console.error("error fetching commits:", error);
     res.status(500).json({ error: error.message });
@@ -27,8 +35,10 @@ app.get("/api/commits-last-year", async (req, res) => {
 
 app.get("/api/top-languages", async (req, res) => {
   try {
-    const languages = await getTopLanguages(USERNAME);
-    res.json({ languages });
+    const text = await getTopLanguagesText();
+    const buffer = await exportGif(text);
+    res.set(getGifHeaders(buffer.length));
+    res.send(buffer);
   } catch (error) {
     console.error("error fetching languages:", error);
     res.status(500).json({ error: error.message });
@@ -37,8 +47,10 @@ app.get("/api/top-languages", async (req, res) => {
 
 app.get("/api/top-repos", async (req, res) => {
   try {
-    const repos = await getTopRepositories(USERNAME);
-    res.json({ repos });
+    const text = await getTopRepositoriesText();
+    const buffer = await exportGif(text);
+    res.set(getGifHeaders(buffer.length));
+    res.send(buffer);
   } catch (error) {
     console.error("error fetching repositories:", error);
     res.status(500).json({ error: error.message });
