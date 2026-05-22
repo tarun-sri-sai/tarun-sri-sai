@@ -4,20 +4,68 @@ const { cached } = require("./cache");
 
 const exportGif = async (lines = []) => {
   return new Promise((resolve, reject) => {
-    if (lines.length === 0) {
+    if (!lines.length) {
       lines = [""];
     }
 
-    const width = 900;
-    const height = 500;
+    const config = {
+      cols: 80,
+
+      fontSize: 16,
+      fontFamily: "Menlo, Monaco, Consolas, monospace",
+      fontWeight: "400",
+
+      lineHeight: 1.5,
+
+      padding: 16,
+      terminalPadding: 20,
+
+      bg: "#0d1117",
+      terminalBg: "#161b22",
+
+      textColor: "#7ee787",
+      cursorColor: "#7ee787",
+
+      frameDelay: 45,
+      quality: 10,
+    };
+
+    const measureCanvas = createCanvas(1, 1);
+    const measureCtx = measureCanvas.getContext("2d");
+
+    measureCtx.font = `${config.fontWeight} ${config.fontSize}px ${config.fontFamily}`;
+
+    measureCtx.textBaseline = "alphabetic";
+
+    const metrics = measureCtx.measureText("M");
+
+    const charWidth = metrics.width;
+
+    const ascent = metrics.actualBoundingBoxAscent || config.fontSize * 0.8;
+
+    const descent = metrics.actualBoundingBoxDescent || config.fontSize * 0.2;
+
+    const textHeight = ascent + descent;
+
+    const lineHeight = Math.round(config.fontSize * config.lineHeight);
+
+    const rows = lines.length;
+
+    const innerWidth =
+      Math.ceil(charWidth * config.cols) + config.terminalPadding * 2;
+
+    const innerHeight = lineHeight * rows + config.terminalPadding * 2;
+
+    const width = innerWidth + config.padding * 2;
+
+    const height = innerHeight + config.padding * 2;
+
     const encoder = new GIFEncoder(width, height);
 
     const chunks = [];
     const stream = encoder.createReadStream();
 
-    stream.on("data", (chunk) => {
-      chunks.push(chunk);
-    });
+    stream.on("data", (chunk) => chunks.push(chunk));
 
     stream.on("end", () => {
       resolve(Buffer.concat(chunks));
@@ -27,11 +75,16 @@ const exportGif = async (lines = []) => {
 
     encoder.start();
     encoder.setRepeat(0);
-    encoder.setDelay(45);
-    encoder.setQuality(10);
+    encoder.setDelay(config.frameDelay);
+    encoder.setQuality(config.quality);
 
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
+
+    ctx.font = `${config.fontWeight} ${config.fontSize}px ${config.fontFamily}`;
+
+    ctx.textBaseline = "alphabetic";
+    ctx.textAlign = "left";
 
     let currentLine = 0;
     let currentChar = 0;
@@ -39,32 +92,45 @@ const exportGif = async (lines = []) => {
     const totalFrames = lines.join("").length * 3 + 80;
 
     for (let frame = 0; frame < totalFrames; frame++) {
-      ctx.fillStyle = "#0d1117";
+      ctx.fillStyle = config.bg;
       ctx.fillRect(0, 0, width, height);
 
-      ctx.fillStyle = "#161b22";
-      ctx.fillRect(20, 20, width - 40, height - 40);
+      ctx.fillStyle = config.terminalBg;
+      ctx.fillRect(config.padding, config.padding, innerWidth, innerHeight);
 
-      ctx.fillStyle = "#7ee787";
-      ctx.font = "28px monospace";
+      ctx.fillStyle = config.textColor;
 
-      let y = 90;
+      const startX = config.padding + config.terminalPadding;
+
+      const startY = config.padding + config.terminalPadding + ascent;
 
       for (let i = 0; i < currentLine; i++) {
-        ctx.fillText(lines[i], 50, y);
-        y += 50;
+        const y = startY + i * lineHeight;
+
+        ctx.fillText(lines[i], startX, y);
       }
 
       const current = lines[currentLine]?.slice(0, currentChar) || "";
 
-      ctx.fillText(current, 50, y);
+      const currentY = startY + currentLine * lineHeight;
+
+      ctx.fillText(current, startX, currentY);
 
       const cursorVisible = Math.floor(frame / 6) % 2 === 0;
 
       if (cursorVisible) {
-        const cursorX = 50 + ctx.measureText(current).width + 5;
+        const cursorX = startX + ctx.measureText(current).width;
 
-        ctx.fillRect(cursorX, y - 24, 12, 28);
+        const cursorWidth = Math.max(2, Math.round(charWidth * 0.12));
+
+        ctx.fillStyle = config.cursorColor;
+
+        ctx.fillRect(
+          Math.round(cursorX + 1),
+          Math.round(currentY - ascent),
+          cursorWidth,
+          Math.round(textHeight),
+        );
       }
 
       currentChar++;
