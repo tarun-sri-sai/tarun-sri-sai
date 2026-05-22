@@ -14,7 +14,7 @@ const getTopLanguagesText = async (top = 10) => {
   const data = await getTopLanguages(top);
 
   return [
-    `$ languages list | sort -hr | head ${top}`,
+    `$ languages list | sort -hr | head -n ${top}`,
     ...data.map((x) => `${x.percentage}%\t${x.name}`),
     "$ ",
   ];
@@ -24,7 +24,7 @@ const getTopRepositoriesText = async (top = 5) => {
   const data = await getTopRepositories(top);
 
   return [
-    `$ repos list | sort -hr | head ${top}`,
+    `$ repos list | sort -hr | head -n ${top}`,
     ...data.map((x) => `${x.commits}\t${x.name}`),
     "$ ",
   ];
