@@ -6,6 +6,7 @@ const {
 } = require("./github/text");
 const { exportGif } = require("./terminal");
 const { CACHE_TTL } = require("./cache");
+const serverless = require("serverless-http");
 
 const app = express();
 
@@ -74,4 +75,4 @@ app.listen(PORT, () => {
   console.log(`server running on port ${PORT}`);
 });
 
-module.exports = app;
+module.exports = serverless(app);
