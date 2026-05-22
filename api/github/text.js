@@ -7,7 +7,7 @@ const {
 const getCommitsLastYearText = async () => {
   const data = await getCommitsLastYear();
 
-  return ["$ commits get --from=last-year", `${data}`];
+  return ["$ commits get --from=last-year", `${data}`, "$ "];
 };
 
 const getTopLanguagesText = async (top = 10) => {
@@ -16,6 +16,7 @@ const getTopLanguagesText = async (top = 10) => {
   return [
     `$ languages list | sort -hr | head ${top}`,
     ...data.map((x) => `${x.percentage}%\t${x.name}`),
+    "$ ",
   ];
 };
 
@@ -25,6 +26,7 @@ const getTopRepositoriesText = async (top = 5) => {
   return [
     `$ repos list | sort -hr | head ${top}`,
     ...data.map((x) => `${x.commits}\t${x.name}`),
+    "$ ",
   ];
 };
 
