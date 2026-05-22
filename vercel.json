@@ -11,9 +11,5 @@
       "src": "/(.*)",
       "dest": "api/index.js"
     }
-  ],
-  "env": {
-    "GITHUB_TOKEN": "@github_token",
-    "GITHUB_USERNAME": "@github_username"
-  }
+  ]
 }
