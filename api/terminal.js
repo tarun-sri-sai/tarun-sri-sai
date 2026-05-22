@@ -91,10 +91,10 @@ const exportGif = async (lines = []) => {
     let currentLine = 0;
     let currentChar = 0;
 
-    const totalChars = lines.join("").length;
-
-    const totalFrames =
-      totalChars * config.framesPerChar + 40;
+    const firstLineChars = (lines[0]?.length || 0);
+    const processingDelay = 20; // frames to simulate processing
+    const firstLineFrames = firstLineChars * config.framesPerChar;
+    const totalFrames = firstLineFrames + processingDelay + 40;
 
     for (let frame = 0; frame < totalFrames; frame++) {
       ctx.fillStyle = config.bg;
@@ -109,47 +109,42 @@ const exportGif = async (lines = []) => {
 
       const startY = config.padding + config.terminalPadding + ascent;
 
-      for (let i = 0; i < currentLine; i++) {
-        const y = startY + i * lineHeight;
 
-        ctx.fillText(lines[i], startX, y);
-      }
+      const firstLineAnimationComplete = frame >= firstLineFrames + processingDelay;
+      if (firstLineAnimationComplete) {
+        for (let i = 0; i < lines.length; i++) {
+          const y = startY + i * lineHeight;
+          ctx.fillText(lines[i], startX, y);
+        }
+      } else if (frame < firstLineFrames) {
+        const current = lines[0]?.slice(0, currentChar) || "";
+        const currentY = startY;
+        ctx.fillText(current, startX, currentY);
 
-      const current = lines[currentLine]?.slice(0, currentChar) || "";
+        const cursorVisible = Math.floor(frame / 6) % 2 === 0;
 
-      const currentY = startY + currentLine * lineHeight;
+        if (cursorVisible) {
+          const cursorX = startX + ctx.measureText(current).width;
+          const cursorWidth = Math.max(2, Math.round(charWidth * 0.12));
+          ctx.fillStyle = config.cursorColor;
 
-      ctx.fillText(current, startX, currentY);
-
-      const cursorVisible = Math.floor(frame / 6) % 2 === 0;
-
-      if (cursorVisible) {
-        const cursorX = startX + ctx.measureText(current).width;
-
-        const cursorWidth = Math.max(2, Math.round(charWidth * 0.12));
-
-        ctx.fillStyle = config.cursorColor;
-
-        ctx.fillRect(
-          Math.round(cursorX + 1),
-          Math.round(currentY - ascent),
-          cursorWidth,
-          Math.round(textHeight),
-        );
-      }
-
-      if (frame % config.framesPerChar === 0) {
-        currentChar++;
-
-        if (currentChar > (lines[currentLine]?.length || 0)) {
-          currentLine++;
-          currentChar = 0;
+          ctx.fillRect(
+            Math.round(cursorX + 1),
+            Math.round(currentY - ascent),
+            cursorWidth,
+            Math.round(textHeight),
+          );
         }
 
-        if (currentLine >= lines.length) {
-          currentLine = lines.length - 1;
-          currentChar = lines[currentLine].length;
+        if (frame % config.framesPerChar === 0) {
+          currentChar++;
+          if (currentChar > firstLineChars) {
+            currentChar = firstLineChars;
+          }
         }
+      } else {
+        const firstLineY = startY;
+        ctx.fillText(lines[0], startX, firstLineY);
       }
 
       encoder.addFrame(ctx);
