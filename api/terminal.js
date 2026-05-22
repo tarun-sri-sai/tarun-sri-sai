@@ -1,5 +1,5 @@
 const GIFEncoder = require("gifencoder");
-const { createCanvas } = require("canvas");
+const { createCanvas } = require("@napi-rs/canvas");
 const { cached } = require("./cache");
 
 const exportGif = async (lines = []) => {
@@ -111,17 +111,32 @@ const exportGif = async (lines = []) => {
 
       const firstLineAnimationComplete =
         frame >= firstLineFrames + processingDelay;
+
+      const cursorVisible = Math.floor(frame / 6) % 2 === 0;
+
       if (firstLineAnimationComplete) {
         for (let i = 0; i < lines.length; i++) {
           const y = startY + i * lineHeight;
           ctx.fillText(lines[i], startX, y);
         }
+        if (cursorVisible) {
+          const cursorX =
+            startX + ctx.measureText(lines[lines.length - 1]).width;
+          const cursorWidth = Math.max(2, Math.round(charWidth * 0.12));
+          ctx.fillStyle = config.cursorColor;
+          const y = startY + (lines.length - 1) * lineHeight;
+
+          ctx.fillRect(
+            Math.round(cursorX + 1),
+            Math.round(y - ascent - 1.5),
+            cursorWidth,
+            Math.round(textHeight),
+          );
+        }
       } else if (frame < firstLineFrames) {
         const current = lines[0]?.slice(0, currentChar) || "";
         const currentY = startY;
         ctx.fillText(current, startX, currentY);
-
-        const cursorVisible = Math.floor(frame / 6) % 2 === 0;
 
         if (cursorVisible) {
           const cursorX = startX + ctx.measureText(current).width;
@@ -130,7 +145,7 @@ const exportGif = async (lines = []) => {
 
           ctx.fillRect(
             Math.round(cursorX + 1),
-            Math.round(currentY - ascent),
+            Math.round(currentY - ascent - 1.5),
             cursorWidth,
             Math.round(textHeight),
           );

@@ -4,6 +4,12 @@ const {
   getTopRepositories,
 } = require("./api");
 
+const padString = (str, width = 8) => {
+  const length = str.length;
+  const paddingLength = (width - (length % width)) % width;
+  return str + " ".repeat(paddingLength);
+}
+
 const getCommitsLastYearText = async () => {
   const data = await getCommitsLastYear();
 
@@ -15,7 +21,7 @@ const getTopLanguagesText = async (top = 10) => {
 
   return [
     `$ languages list | sort -hr | head -n ${top}`,
-    ...data.map((x) => `${x.percentage}%\t${x.name}`),
+    ...data.map((x) => `${padString(`${x.percentage}%`)}${x.name}`),
     "$ ",
   ];
 };
@@ -25,7 +31,7 @@ const getTopRepositoriesText = async (top = 5) => {
 
   return [
     `$ repos list | sort -hr | head -n ${top}`,
-    ...data.map((x) => `${x.commits}\t${x.name}`),
+    ...data.map((x) => `${padString(`${x.commits}`)}${x.name}`),
     "$ ",
   ];
 };

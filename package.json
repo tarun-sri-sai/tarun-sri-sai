@@ -14,7 +14,7 @@
   "type": "commonjs",
   "dependencies": {
     "@keyv/redis": "^5.1.6",
-    "canvas": "^3.2.3",
+    "@napi-rs/canvas": "^1.0.0",
     "express": "^5.2.1",
     "fast-json-stable-stringify": "^2.1.0",
     "gifencoder": "^2.0.1",
