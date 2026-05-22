@@ -91,7 +91,7 @@ const exportGif = async (lines = []) => {
     let currentLine = 0;
     let currentChar = 0;
 
-    const firstLineChars = (lines[0]?.length || 0);
+    const firstLineChars = lines[0]?.length || 0;
     const processingDelay = 20; // frames to simulate processing
     const firstLineFrames = firstLineChars * config.framesPerChar;
     const totalFrames = firstLineFrames + processingDelay + 40;
@@ -109,8 +109,8 @@ const exportGif = async (lines = []) => {
 
       const startY = config.padding + config.terminalPadding + ascent;
 
-
-      const firstLineAnimationComplete = frame >= firstLineFrames + processingDelay;
+      const firstLineAnimationComplete =
+        frame >= firstLineFrames + processingDelay;
       if (firstLineAnimationComplete) {
         for (let i = 0; i < lines.length; i++) {
           const y = startY + i * lineHeight;
