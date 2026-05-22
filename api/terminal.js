@@ -94,7 +94,7 @@ const exportGif = async (lines = []) => {
     const firstLineChars = lines[0]?.length || 0;
     const processingDelay = 20; // frames to simulate processing
     const firstLineFrames = firstLineChars * config.framesPerChar;
-    const totalFrames = firstLineFrames + processingDelay + 40;
+    const totalFrames = firstLineFrames + processingDelay + 120;
 
     for (let frame = 0; frame < totalFrames; frame++) {
       ctx.fillStyle = config.bg;
