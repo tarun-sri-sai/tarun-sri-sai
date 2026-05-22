@@ -6,9 +6,9 @@ const {
 } = require("./github/text");
 const { exportGif } = require("./terminal");
 const { CACHE_TTL } = require("./cache");
-const serverless = require("serverless-http");
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -70,4 +70,6 @@ app.get("/", (req, res) => {
   });
 });
 
-module.exports = serverless(app);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
