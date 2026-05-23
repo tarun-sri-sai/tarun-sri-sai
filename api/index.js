@@ -24,8 +24,8 @@ const getGifHeaders = (bufferLength) => ({
 
 app.get("/api/commits-last-year", async (req, res) => {
   try {
-    const events = await getCommitsLastYearEvents();
-    const buffer = await exportGif(events);
+    const { events, rows } = await getCommitsLastYearEvents();
+    const buffer = await exportGif(events, rows);
     res.set(getGifHeaders(buffer.length));
     res.send(buffer);
   } catch (error) {
@@ -36,8 +36,8 @@ app.get("/api/commits-last-year", async (req, res) => {
 
 app.get("/api/top-languages", async (req, res) => {
   try {
-    const events = await getTopLanguagesEvents();
-    const buffer = await exportGif(events);
+    const { events, rows } = await getTopLanguagesEvents();
+    const buffer = await exportGif(events, rows);
     res.set(getGifHeaders(buffer.length));
     res.send(buffer);
   } catch (error) {
@@ -48,8 +48,8 @@ app.get("/api/top-languages", async (req, res) => {
 
 app.get("/api/top-repos", async (req, res) => {
   try {
-    const events = await getTopRepositoriesEvents();
-    const buffer = await exportGif(events);
+    const { events, rows } = await getTopRepositoriesEvents();
+    const buffer = await exportGif(events, rows);
     res.set(getGifHeaders(buffer.length));
     res.send(buffer);
   } catch (error) {

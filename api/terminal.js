@@ -31,10 +31,10 @@ const config = {
   cursorWidth: 0.8,
 };
 
-const createTerminal = () => {
+const createTerminal = (rows) => {
   return new Terminal({
     cols: config.cols,
-    rows: config.rows,
+    rows: rows || config.rows,
     cursorBlink: true,
     theme: config.theme,
     allowProposedApi: true,
@@ -98,15 +98,15 @@ const renderCursor = (ctx, x, y, cellWidth, typing) => {
     (x * (1 - (1 - config.cursorWidth) / 2) + +typing) * cellWidth,
     config.fontSize * (y * config.lineHeight + (config.lineHeight - 1)),
     cellWidth * config.cursorWidth,
-    config.fontSize
+    config.fontSize,
   );
 };
 
-const createRenderer = ({ terminal }) => {
+const createRenderer = (terminal, rows) => {
   const { width: cellWidth } = getDimensions();
 
   const width = cellWidth * config.cols;
-  const height = config.lineHeight * config.fontSize * config.rows;
+  const height = config.lineHeight * config.fontSize * (rows || config.rows);
   const canvas = createCanvas(width, height);
 
   const ctx = canvas.getContext("2d");
@@ -118,7 +118,7 @@ const createRenderer = ({ terminal }) => {
     ctx.fillRect(0, 0, width, height);
 
     const buffer = terminal.buffer.active;
-    for (let y = 0; y < config.rows; y++) {
+    for (let y = 0; y < (rows || config.rows); y++) {
       const line = buffer.getLine(y);
       if (!line) {
         continue;
@@ -154,7 +154,7 @@ const createRenderer = ({ terminal }) => {
   };
 };
 
-const createEncoder = ({ width, height }) => {
+const createEncoder = (width, height) => {
   const encoder = new GIFEncoder(width, height);
   const chunks = [];
   const stream = encoder.createReadStream();
@@ -182,13 +182,10 @@ const createEncoder = ({ width, height }) => {
   };
 };
 
-const exportGif = async (events = []) => {
-  const terminal = createTerminal();
-  const renderer = createRenderer({ terminal });
-  const { encoder, finish } = createEncoder({
-    width: renderer.width,
-    height: renderer.height,
-  });
+const exportGif = async (events = [], rows) => {
+  const terminal = createTerminal(rows);
+  const renderer = createRenderer(terminal, rows);
+  const { encoder, finish } = createEncoder(renderer.width, renderer.height);
 
   let frames = 0;
   await playEvents({
