@@ -1,172 +1,207 @@
 const GIFEncoder = require("gifencoder");
-const { createCanvas } = require("@napi-rs/canvas");
+const { createCanvas, GlobalFonts } = require("@napi-rs/canvas");
 const { cached } = require("./cache");
+const { Terminal } = require("@xterm/headless");
 
-const exportGif = async (lines = []) => {
-  return new Promise((resolve, reject) => {
-    if (!lines.length) {
-      lines = [""];
+GlobalFonts.registerFromPath(
+  "./fonts/JetBrainsMonoNerdFont-Regular.ttf",
+  "JetBrains Mono",
+);
+
+const config = {
+  cols: 80,
+  rows: 12,
+
+  fontSize: 16,
+
+  fontFamily: "JetBrains Mono",
+
+  lineHeight: 1.5,
+
+  theme: {
+    background: "#0d1117",
+    foreground: "#7ee787",
+  },
+
+  gif: {
+    delay: 60,
+    quality: 10,
+  },
+
+  cursorWidth: 0.8,
+};
+
+const createTerminal = () => {
+  return new Terminal({
+    cols: config.cols,
+    rows: config.rows,
+    cursorBlink: true,
+    theme: config.theme,
+    allowProposedApi: true,
+  });
+};
+
+const playEvent = async (event, terminal, onFrame) => {
+  switch (event.type) {
+    case "type": {
+      for (const char of event.text) {
+        await new Promise((resolve) => {
+          terminal.write(char, resolve);
+        });
+        await onFrame(true);
+      }
+      break;
     }
 
-    const config = {
-      cols: 80,
+    case "output": {
+      await new Promise((resolve) => {
+        terminal.write(event.text, resolve);
+      });
+      await onFrame();
+      break;
+    }
 
-      fontSize: 16,
-      fontFamily: "Menlo, Monaco, Consolas, monospace",
-      fontWeight: "400",
+    case "wait": {
+      const frames = Math.floor(event.ms / config.gif.delay);
+      for (let i = 0; i < frames; i++) {
+        await onFrame();
+      }
+      break;
+    }
 
-      lineHeight: 1.5,
+    case "clear": {
+      terminal.clear();
+      await onFrame();
+      break;
+    }
+  }
+};
 
-      padding: 16,
-      terminalPadding: 20,
+const playEvents = async ({ terminal, events, onFrame }) => {
+  for (const event of events) {
+    await playEvent(event, terminal, onFrame);
+  }
+};
 
-      bg: "#0d1117",
-      terminalBg: "#161b22",
+const getDimensions = () => {
+  const measureCanvas = createCanvas(1, 1);
+  const measureCtx = measureCanvas.getContext("2d");
+  measureCtx.font = `${config.fontSize}px ${config.fontFamily}`;
 
-      textColor: "#7ee787",
-      cursorColor: "#7ee787",
+  const metrics = measureCtx.measureText("M");
+  return metrics;
+};
 
-      frameDelay: 60,
-      quality: 10,
+const renderCursor = (ctx, x, y, cellWidth, typing) => {
+  ctx.fillStyle = config.theme.foreground;
+  ctx.fillRect(
+    (x * (1 - (1 - config.cursorWidth) / 2) + +typing) * cellWidth,
+    config.fontSize * (y * config.lineHeight + (config.lineHeight - 1)),
+    cellWidth * config.cursorWidth,
+    config.fontSize
+  );
+};
 
-      framesPerChar: 2,
-    };
+const createRenderer = ({ terminal }) => {
+  const { width: cellWidth } = getDimensions();
 
-    const measureCanvas = createCanvas(1, 1);
-    const measureCtx = measureCanvas.getContext("2d");
+  const width = cellWidth * config.cols;
+  const height = config.lineHeight * config.fontSize * config.rows;
+  const canvas = createCanvas(width, height);
 
-    measureCtx.font = `${config.fontWeight} ${config.fontSize}px ${config.fontFamily}`;
+  const ctx = canvas.getContext("2d");
+  ctx.font = `${config.fontSize}px ${config.fontFamily}`;
+  ctx.textBaseline = "top";
 
-    measureCtx.textBaseline = "alphabetic";
+  const render = (frames, typing = false) => {
+    ctx.fillStyle = config.theme.background;
+    ctx.fillRect(0, 0, width, height);
 
-    const metrics = measureCtx.measureText("M");
-
-    const charWidth = metrics.width;
-
-    const ascent = metrics.actualBoundingBoxAscent || config.fontSize * 0.8;
-
-    const descent = metrics.actualBoundingBoxDescent || config.fontSize * 0.2;
-
-    const textHeight = ascent + descent;
-
-    const lineHeight = Math.round(config.fontSize * config.lineHeight);
-
-    const rows = lines.length;
-
-    const innerWidth =
-      Math.ceil(charWidth * config.cols) + config.terminalPadding * 2;
-
-    const innerHeight = lineHeight * rows + config.terminalPadding * 2;
-
-    const width = innerWidth + config.padding * 2;
-
-    const height = innerHeight + config.padding * 2;
-
-    const encoder = new GIFEncoder(width, height);
-
-    const chunks = [];
-    const stream = encoder.createReadStream();
-
-    stream.on("data", (chunk) => chunks.push(chunk));
-
-    stream.on("end", () => {
-      resolve(Buffer.concat(chunks));
-    });
-
-    stream.on("error", reject);
-
-    encoder.start();
-    encoder.setRepeat(0);
-    encoder.setDelay(config.frameDelay);
-    encoder.setQuality(config.quality);
-
-    const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext("2d");
-
-    ctx.font = `${config.fontWeight} ${config.fontSize}px ${config.fontFamily}`;
-
-    ctx.textBaseline = "alphabetic";
-    ctx.textAlign = "left";
-
-    let currentLine = 0;
-    let currentChar = 0;
-
-    const firstLineChars = lines[0]?.length || 0;
-    const processingDelay = 20; // frames to simulate processing
-    const firstLineFrames = firstLineChars * config.framesPerChar;
-    const totalFrames = firstLineFrames + processingDelay + 120;
-
-    for (let frame = 0; frame < totalFrames; frame++) {
-      ctx.fillStyle = config.bg;
-      ctx.fillRect(0, 0, width, height);
-
-      ctx.fillStyle = config.terminalBg;
-      ctx.fillRect(config.padding, config.padding, innerWidth, innerHeight);
-
-      ctx.fillStyle = config.textColor;
-
-      const startX = config.padding + config.terminalPadding;
-
-      const startY = config.padding + config.terminalPadding + ascent;
-
-      const firstLineAnimationComplete =
-        frame >= firstLineFrames + processingDelay;
-
-      const cursorVisible = Math.floor(frame / 6) % 2 === 0;
-
-      if (firstLineAnimationComplete) {
-        for (let i = 0; i < lines.length; i++) {
-          const y = startY + i * lineHeight;
-          ctx.fillText(lines[i], startX, y);
-        }
-        if (cursorVisible) {
-          const cursorX =
-            startX + ctx.measureText(lines[lines.length - 1]).width;
-          const cursorWidth = Math.max(2, Math.round(charWidth * 0.12));
-          ctx.fillStyle = config.cursorColor;
-          const y = startY + (lines.length - 1) * lineHeight;
-
-          ctx.fillRect(
-            Math.round(cursorX + 1),
-            Math.round(y - ascent - 1.5),
-            cursorWidth,
-            Math.round(textHeight),
-          );
-        }
-      } else if (frame < firstLineFrames) {
-        const current = lines[0]?.slice(0, currentChar) || "";
-        const currentY = startY;
-        ctx.fillText(current, startX, currentY);
-
-        if (cursorVisible) {
-          const cursorX = startX + ctx.measureText(current).width;
-          const cursorWidth = Math.max(2, Math.round(charWidth * 0.12));
-          ctx.fillStyle = config.cursorColor;
-
-          ctx.fillRect(
-            Math.round(cursorX + 1),
-            Math.round(currentY - ascent - 1.5),
-            cursorWidth,
-            Math.round(textHeight),
-          );
-        }
-
-        if (frame % config.framesPerChar === 0) {
-          currentChar++;
-          if (currentChar > firstLineChars) {
-            currentChar = firstLineChars;
-          }
-        }
-      } else {
-        const firstLineY = startY;
-        ctx.fillText(lines[0], startX, firstLineY);
+    const buffer = terminal.buffer.active;
+    for (let y = 0; y < config.rows; y++) {
+      const line = buffer.getLine(y);
+      if (!line) {
+        continue;
       }
 
-      encoder.addFrame(ctx);
+      for (let x = 0; x < config.cols; x++) {
+        const cell = line.getCell(x);
+        if (!cell) {
+          continue;
+        }
+
+        const char = cell.getChars();
+        ctx.fillStyle = config.theme.foreground;
+        ctx.fillText(
+          char,
+          x * cellWidth,
+          config.fontSize * (y * config.lineHeight + (config.lineHeight - 1)),
+        );
+      }
     }
 
-    encoder.finish();
+    if (frames % 16 < 8) {
+      renderCursor(ctx, buffer.cursorX, buffer.cursorY, cellWidth, typing);
+    }
+
+    return ctx;
+  };
+
+  return {
+    width,
+    height,
+    render,
+  };
+};
+
+const createEncoder = ({ width, height }) => {
+  const encoder = new GIFEncoder(width, height);
+  const chunks = [];
+  const stream = encoder.createReadStream();
+
+  stream.on("data", (chunk) => {
+    chunks.push(chunk);
   });
+
+  encoder.start();
+  encoder.setRepeat(0);
+  encoder.setDelay(config.gif.delay);
+  encoder.setQuality(config.gif.quality);
+
+  return {
+    encoder,
+
+    finish: () =>
+      new Promise((resolve) => {
+        stream.on("end", () => {
+          resolve(Buffer.concat(chunks));
+        });
+
+        encoder.finish();
+      }),
+  };
+};
+
+const exportGif = async (events = []) => {
+  const terminal = createTerminal();
+  const renderer = createRenderer({ terminal });
+  const { encoder, finish } = createEncoder({
+    width: renderer.width,
+    height: renderer.height,
+  });
+
+  let frames = 0;
+  await playEvents({
+    terminal,
+    events,
+    onFrame: async (typing) => {
+      frames++;
+      const ctx = renderer.render(frames, typing);
+      encoder.addFrame(ctx);
+    },
+  });
+
+  return finish();
 };
 
 module.exports = {

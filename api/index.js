@@ -1,9 +1,9 @@
 const express = require("express");
 const {
-  getCommitsLastYearText,
-  getTopLanguagesText,
-  getTopRepositoriesText,
-} = require("./github/text");
+  getCommitsLastYearEvents,
+  getTopLanguagesEvents,
+  getTopRepositoriesEvents,
+} = require("./github/events");
 const { exportGif } = require("./terminal");
 const { CACHE_TTL } = require("./cache");
 
@@ -24,8 +24,8 @@ const getGifHeaders = (bufferLength) => ({
 
 app.get("/api/commits-last-year", async (req, res) => {
   try {
-    const text = await getCommitsLastYearText();
-    const buffer = await exportGif(text);
+    const events = await getCommitsLastYearEvents();
+    const buffer = await exportGif(events);
     res.set(getGifHeaders(buffer.length));
     res.send(buffer);
   } catch (error) {
@@ -36,8 +36,8 @@ app.get("/api/commits-last-year", async (req, res) => {
 
 app.get("/api/top-languages", async (req, res) => {
   try {
-    const text = await getTopLanguagesText();
-    const buffer = await exportGif(text);
+    const events = await getTopLanguagesEvents();
+    const buffer = await exportGif(events);
     res.set(getGifHeaders(buffer.length));
     res.send(buffer);
   } catch (error) {
@@ -48,8 +48,8 @@ app.get("/api/top-languages", async (req, res) => {
 
 app.get("/api/top-repos", async (req, res) => {
   try {
-    const text = await getTopRepositoriesText();
-    const buffer = await exportGif(text);
+    const events = await getTopRepositoriesEvents();
+    const buffer = await exportGif(events);
     res.set(getGifHeaders(buffer.length));
     res.send(buffer);
   } catch (error) {
@@ -70,6 +70,10 @@ app.get("/", (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`server is running on port ${PORT}`);
-});
+app
+  .listen(PORT, () => {
+    console.log(`server is running on port ${PORT}`);
+  })
+  .on("error", (e) => {
+    console.error(`server crashed with error: ${e}`);
+  });
