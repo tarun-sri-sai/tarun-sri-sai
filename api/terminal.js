@@ -94,11 +94,10 @@ const getDimensions = () => {
 
 const renderCursor = (ctx, x, y, cellWidth) => {
   ctx.fillStyle = config.theme.foreground;
-  ctx.fillRect(
+  ctx.fillText(
+    "█",
     x * cellWidth,
     config.fontSize * (y * config.lineHeight + (config.lineHeight - 1)),
-    cellWidth * config.cursorWidth,
-    config.fontSize,
   );
 };
 
