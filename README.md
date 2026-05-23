@@ -1,4 +1,4 @@
-# GitHub Stats
+# GitHub Stats v1
 
 ![](https://tarun-sri-sai.vercel.app/api/commits-last-year)
 ![](https://tarun-sri-sai.vercel.app/api/top-languages)
