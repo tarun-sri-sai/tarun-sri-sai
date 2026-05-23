@@ -48,7 +48,7 @@ const playEvent = async (event, terminal, onFrame) => {
         await new Promise((resolve) => {
           terminal.write(char, resolve);
         });
-        await onFrame(true);
+        await onFrame();
       }
       break;
     }
@@ -92,10 +92,10 @@ const getDimensions = () => {
   return metrics;
 };
 
-const renderCursor = (ctx, x, y, cellWidth, typing) => {
+const renderCursor = (ctx, x, y, cellWidth) => {
   ctx.fillStyle = config.theme.foreground;
   ctx.fillRect(
-    (x * (1 - (1 - config.cursorWidth) / 2) + +typing) * cellWidth,
+    x * cellWidth,
     config.fontSize * (y * config.lineHeight + (config.lineHeight - 1)),
     cellWidth * config.cursorWidth,
     config.fontSize,
@@ -113,7 +113,7 @@ const createRenderer = (terminal, rows) => {
   ctx.font = `${config.fontSize}px ${config.fontFamily}`;
   ctx.textBaseline = "top";
 
-  const render = (frames, typing = false) => {
+  const render = (frames) => {
     ctx.fillStyle = config.theme.background;
     ctx.fillRect(0, 0, width, height);
 
@@ -141,7 +141,7 @@ const createRenderer = (terminal, rows) => {
     }
 
     if (frames % 16 < 8) {
-      renderCursor(ctx, buffer.cursorX, buffer.cursorY, cellWidth, typing);
+      renderCursor(ctx, buffer.cursorX, buffer.cursorY, cellWidth);
     }
 
     return ctx;
@@ -191,9 +191,9 @@ const exportGif = async (events = [], rows) => {
   await playEvents({
     terminal,
     events,
-    onFrame: async (typing) => {
+    onFrame: async () => {
       frames++;
-      const ctx = renderer.render(frames, typing);
+      const ctx = renderer.render(frames);
       encoder.addFrame(ctx);
     },
   });
