@@ -4,7 +4,7 @@ const {
   getTopLanguagesEvents,
   getTopRepositoriesEvents,
 } = require("./github/events");
-const { exportGif } = require("./terminal");
+const { exportSvg } = require("./terminal");
 const { CACHE_TTL } = require("./cache");
 
 const app = express();
@@ -16,8 +16,8 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-const getGifHeaders = (bufferLength) => ({
-  "Content-Type": "image/gif",
+const getSvgHeaders = (bufferLength) => ({
+  "Content-Type": "image/svg+xml",
   "Cache-Control": `max-age=${CACHE_TTL.as("seconds")}`,
   "Content-Length": bufferLength,
 });
@@ -25,8 +25,8 @@ const getGifHeaders = (bufferLength) => ({
 app.get("/api/commits-last-year", async (req, res) => {
   try {
     const { events, rows } = await getCommitsLastYearEvents();
-    const buffer = await exportGif(events, rows);
-    res.set(getGifHeaders(buffer.length));
+    const buffer = await exportSvg(events, rows);
+    res.set(getSvgHeaders(buffer.length));
     res.send(buffer);
   } catch (error) {
     console.error("error fetching commits:", error);
@@ -37,8 +37,7 @@ app.get("/api/commits-last-year", async (req, res) => {
 app.get("/api/top-languages", async (req, res) => {
   try {
     const { events, rows } = await getTopLanguagesEvents();
-    const buffer = await exportGif(events, rows);
-    res.set(getGifHeaders(buffer.length));
+    const buffer = await exportSvg(events, rows);
     res.send(buffer);
   } catch (error) {
     console.error("error fetching languages:", error);
@@ -49,8 +48,7 @@ app.get("/api/top-languages", async (req, res) => {
 app.get("/api/top-repos", async (req, res) => {
   try {
     const { events, rows } = await getTopRepositoriesEvents();
-    const buffer = await exportGif(events, rows);
-    res.set(getGifHeaders(buffer.length));
+    const buffer = await exportSvg(events, rows);
     res.send(buffer);
   } catch (error) {
     console.error("error fetching repositories:", error);

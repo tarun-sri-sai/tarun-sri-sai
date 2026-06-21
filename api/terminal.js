@@ -1,205 +1,84 @@
-const GIFEncoder = require("gifencoder");
-const { createCanvas, GlobalFonts } = require("@napi-rs/canvas");
 const { cached } = require("./cache");
-const { Terminal } = require("@xterm/headless");
+const fs = require("fs/promises");
+const { execSync, execFile } = require("child_process");
+const { promisify } = require("util");
+const { file } = require("tmp-promise");
 
-GlobalFonts.registerFromPath(
-  "./fonts/JetBrainsMonoNerdFont-Regular.ttf",
-  "JetBrains Mono",
-);
+const execFileAsync = promisify(execFile);
 
-const config = {
-  cols: 80,
-  rows: 12,
+const exportAsciicast = async (events, rows = 12) => {
+  const records = [];
+  let t = 0;
 
-  fontSize: 16,
-
-  fontFamily: "JetBrains Mono",
-
-  lineHeight: 1.5,
-
-  theme: {
-    background: "#0d1117",
-    foreground: "#7ee787",
-  },
-
-  gif: {
-    delay: 60,
-    quality: 10,
-  },
-
-  cursorWidth: 0.8,
-};
-
-const createTerminal = (rows) => {
-  return new Terminal({
-    cols: config.cols,
-    rows: rows || config.rows,
-    cursorBlink: true,
-    theme: config.theme,
-    allowProposedApi: true,
-  });
-};
-
-const playEvent = async (event, terminal, onFrame) => {
-  switch (event.type) {
-    case "type": {
-      for (const char of event.text) {
-        await new Promise((resolve) => {
-          terminal.write(char, resolve);
-        });
-        await onFrame();
-      }
-      break;
-    }
-
-    case "output": {
-      await new Promise((resolve) => {
-        terminal.write(event.text, resolve);
-      });
-      await onFrame();
-      break;
-    }
-
-    case "wait": {
-      const frames = Math.floor(event.ms / config.gif.delay);
-      for (let i = 0; i < frames; i++) {
-        await onFrame();
-      }
-      break;
-    }
-
-    case "clear": {
-      terminal.clear();
-      await onFrame();
-      break;
-    }
-  }
-};
-
-const playEvents = async ({ terminal, events, onFrame }) => {
   for (const event of events) {
-    await playEvent(event, terminal, onFrame);
+    switch (event.type) {
+      case "type":
+        for (const ch of event.text) {
+          records.push([t, "o", ch]);
+          t += 0.05;
+        }
+        break;
+
+      case "output":
+        records.push([t, "o", event.text]);
+        break;
+
+      case "wait":
+        t += event.ms / 1000;
+        break;
+
+      case "clear":
+        records.push([t, "o", "\x1b[2J\x1b[H"]);
+        break;
+    }
+  }
+
+  return [
+    JSON.stringify({
+      version: 2,
+      width: 80,
+      height: rows,
+      timestamp: Math.floor(Date.now() / 1000),
+    }),
+    ...records.map(JSON.stringify),
+  ].join("\n");
+};
+
+const castToSvg = async (cast) => {
+  const castFile = await file({ postfix: ".cast" });
+  const svgFile = await file({ postfix: ".svg" });
+
+  try {
+    await fs.writeFile(castFile.path, cast);
+
+    const svgArgs = [
+      "svg-term",
+      "--in",
+      castFile.path,
+      "--out",
+      svgFile.path,
+      "--window",
+      "--no-cursor",
+    ];
+
+    const win32Args = ["cmd", ["/c", "npx", ...svgArgs]];
+    const nonWin32Args = ["npx", svgArgs];
+
+    await execFileAsync(
+      ...(process.platform === "win32" ? win32Args : nonWin32Args),
+    );
+
+    return await fs.readFile(svgFile.path, "utf8");
+  } finally {
+    await Promise.allSettled([castFile.cleanup(), svgFile.cleanup()]);
   }
 };
 
-const getDimensions = () => {
-  const measureCanvas = createCanvas(1, 1);
-  const measureCtx = measureCanvas.getContext("2d");
-  measureCtx.font = `${config.fontSize}px ${config.fontFamily}`;
-
-  const metrics = measureCtx.measureText("M");
-  return metrics;
-};
-
-const renderCursor = (ctx, x, y, cellWidth) => {
-  ctx.fillStyle = config.theme.foreground;
-  ctx.fillText(
-    "█",
-    x * cellWidth,
-    config.fontSize * (y * config.lineHeight + (config.lineHeight - 1)),
-  );
-};
-
-const createRenderer = (terminal, rows) => {
-  const { width: cellWidth } = getDimensions();
-
-  const width = cellWidth * config.cols;
-  const height = config.lineHeight * config.fontSize * (rows || config.rows);
-  const canvas = createCanvas(width, height);
-
-  const ctx = canvas.getContext("2d");
-  ctx.font = `${config.fontSize}px ${config.fontFamily}`;
-  ctx.textBaseline = "top";
-
-  const render = (frames) => {
-    ctx.fillStyle = config.theme.background;
-    ctx.fillRect(0, 0, width, height);
-
-    const buffer = terminal.buffer.active;
-    for (let y = 0; y < (rows || config.rows); y++) {
-      const line = buffer.getLine(y);
-      if (!line) {
-        continue;
-      }
-
-      for (let x = 0; x < config.cols; x++) {
-        const cell = line.getCell(x);
-        if (!cell) {
-          continue;
-        }
-
-        const char = cell.getChars();
-        ctx.fillStyle = config.theme.foreground;
-        ctx.fillText(
-          char,
-          x * cellWidth,
-          config.fontSize * (y * config.lineHeight + (config.lineHeight - 1)),
-        );
-      }
-    }
-
-    if (frames % 16 < 8) {
-      renderCursor(ctx, buffer.cursorX, buffer.cursorY, cellWidth);
-    }
-
-    return ctx;
-  };
-
-  return {
-    width,
-    height,
-    render,
-  };
-};
-
-const createEncoder = (width, height) => {
-  const encoder = new GIFEncoder(width, height);
-  const chunks = [];
-  const stream = encoder.createReadStream();
-
-  stream.on("data", (chunk) => {
-    chunks.push(chunk);
-  });
-
-  encoder.start();
-  encoder.setRepeat(0);
-  encoder.setDelay(config.gif.delay);
-  encoder.setQuality(config.gif.quality);
-
-  return {
-    encoder,
-
-    finish: () =>
-      new Promise((resolve) => {
-        stream.on("end", () => {
-          resolve(Buffer.concat(chunks));
-        });
-
-        encoder.finish();
-      }),
-  };
-};
-
-const exportGif = async (events = [], rows) => {
-  const terminal = createTerminal(rows);
-  const renderer = createRenderer(terminal, rows);
-  const { encoder, finish } = createEncoder(renderer.width, renderer.height);
-
-  let frames = 0;
-  await playEvents({
-    terminal,
-    events,
-    onFrame: async () => {
-      frames++;
-      const ctx = renderer.render(frames);
-      encoder.addFrame(ctx);
-    },
-  });
-
-  return finish();
+const exportSvg = async (events = [], rows) => {
+  const asciicast = await exportAsciicast(events, rows);
+  return await castToSvg(asciicast);
 };
 
 module.exports = {
-  exportGif: cached(exportGif),
+  exportSvg: cached(exportSvg),
 };
