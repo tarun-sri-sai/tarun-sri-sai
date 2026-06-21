@@ -45,6 +45,7 @@ const exportSvg = async (events = [], rows) => {
     theme: {
       background: [13, 17, 23],
       text: [240, 246, 252],
+      cursor: [240, 246, 252],
     },
   });
 };
