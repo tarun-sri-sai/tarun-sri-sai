@@ -38,6 +38,7 @@ app.get("/api/top-languages", async (req, res) => {
   try {
     const { events, rows } = await getTopLanguagesEvents();
     const buffer = await exportSvg(events, rows);
+    res.set(getSvgHeaders(buffer.length));
     res.send(buffer);
   } catch (error) {
     console.error("error fetching languages:", error);
@@ -49,6 +50,7 @@ app.get("/api/top-repos", async (req, res) => {
   try {
     const { events, rows } = await getTopRepositoriesEvents();
     const buffer = await exportSvg(events, rows);
+    res.set(getSvgHeaders(buffer.length));
     res.send(buffer);
   } catch (error) {
     console.error("error fetching repositories:", error);
