@@ -159,7 +159,7 @@ const getTopLanguages = async (top = 10) => {
         percentage: totalSize > 0 ? ((size / totalSize) * 100).toFixed(2) : 0,
       }))
       .sort((a, b) => b.bytes - a.bytes)
-      .slice(0, 10);
+      .slice(0, top);
 
     return languages;
   } catch (error) {
