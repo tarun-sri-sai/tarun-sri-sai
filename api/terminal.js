@@ -1,10 +1,5 @@
 const { cached } = require("./cache");
-const fs = require("fs/promises");
-const { execSync, execFile } = require("child_process");
-const { promisify } = require("util");
-const { file } = require("tmp-promise");
-
-const execFileAsync = promisify(execFile);
+const { render } = require("svg-term");
 
 const exportAsciicast = async (events, rows = 12) => {
   const records = [];
@@ -44,39 +39,9 @@ const exportAsciicast = async (events, rows = 12) => {
   ].join("\n");
 };
 
-const castToSvg = async (cast) => {
-  const castFile = await file({ postfix: ".cast" });
-  const svgFile = await file({ postfix: ".svg" });
-
-  try {
-    await fs.writeFile(castFile.path, cast);
-
-    const svgArgs = [
-      "svg-term",
-      "--in",
-      castFile.path,
-      "--out",
-      svgFile.path,
-      "--window",
-      "--no-cursor",
-    ];
-
-    const win32Args = ["cmd", ["/c", "npx", ...svgArgs]];
-    const nonWin32Args = ["npx", svgArgs];
-
-    await execFileAsync(
-      ...(process.platform === "win32" ? win32Args : nonWin32Args),
-    );
-
-    return await fs.readFile(svgFile.path, "utf8");
-  } finally {
-    await Promise.allSettled([castFile.cleanup(), svgFile.cleanup()]);
-  }
-};
-
 const exportSvg = async (events = [], rows) => {
   const asciicast = await exportAsciicast(events, rows);
-  return await castToSvg(asciicast);
+  return render(asciicast);
 };
 
 module.exports = {
