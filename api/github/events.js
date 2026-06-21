@@ -15,7 +15,7 @@ const getCommitsLastYearEvents = async () => {
 
   return {
     events: [
-      { type: "type", text: "$ " },
+      { type: "output", text: "$ " },
       { type: "type", text: "commits get --from=last-year\r\n" },
       { type: "wait", ms: 1000 },
       { type: "output", text: `${data}\r\n` },
@@ -33,7 +33,7 @@ const getTopLanguagesEvents = async (top = 10) => {
 
   return {
     events: [
-      { type: "type", text: "$ " },
+      { type: "output", text: "$ " },
       { type: "type", text: `languages list | sort -hr | head -n ${top}\r\n` },
       { type: "wait", ms: 1000 },
       ...data.map((x) => ({
@@ -54,7 +54,7 @@ const getTopRepositoriesEvents = async (top = 5) => {
 
   return {
     events: [
-      { type: "type", text: "$ " },
+      { type: "output", text: "$ " },
       { type: "type", text: `repos list | sort -hr | head -n ${top}\r\n` },
       { type: "wait", ms: 1000 },
       ...data.map((x) => ({
