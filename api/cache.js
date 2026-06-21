@@ -1,6 +1,6 @@
 const Keyv = require("keyv").default;
 const KeyvRedis = require("@keyv/redis").default;
-const KeyvGzip = require("@keyv/compress-gzip").default;
+const zlib = require("zlib");
 const crypto = require("crypto");
 const stringify = require("fast-json-stable-stringify");
 const { Duration } = require("luxon");
@@ -10,8 +10,9 @@ const CACHE_TTL = Duration.fromObject({ days: 7 });
 const cache = new Keyv({
   store: new KeyvRedis(process.env.REDIS_URL),
   ttl: CACHE_TTL.as("milliseconds"),
-  compression: new KeyvGzip(),
 });
+
+cache.on("error", (err) => console.error(`keyv error: ${err}`));
 
 const cached = (fn) => {
   return async (...args) => {
@@ -22,11 +23,11 @@ const cached = (fn) => {
 
     const cachedValue = await cache.get(key);
     if (cachedValue !== undefined) {
-      return JSON.parse(cachedValue);
+      return JSON.parse(zlib.gunzipSync(cachedValue).toString("utf8"));
     }
 
     const result = await fn(...args);
-    await cache.set(key, JSON.stringify(result));
+    await cache.set(key, zlib.gzipSync(Buffer.from(JSON.stringify(result))));
     return result;
   };
 };

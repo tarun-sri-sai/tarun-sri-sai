@@ -13,7 +13,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@keyv/compress-gzip": "^2.0.3",
     "@keyv/redis": "^5.1.6",
     "express": "^5.2.1",
     "fast-json-stable-stringify": "^2.1.0",
