@@ -41,7 +41,12 @@ const exportAsciicast = async (events, rows = 12) => {
 
 const exportSvg = async (events = [], rows) => {
   const asciicast = await exportAsciicast(events, rows);
-  return render(asciicast);
+  return render(asciicast, {
+    theme: {
+      background: [13, 17, 23],
+      text: [240, 246, 252],
+    },
+  });
 };
 
 module.exports = {
