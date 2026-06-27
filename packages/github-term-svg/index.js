@@ -2,7 +2,9 @@ const {
   getCommitsLastYear,
   getTopLanguages,
   getTopRepositories,
-} = require("./api");
+} = require("./github");
+const { CACHE_TTL } = require("./cache");
+const { exportSvg } = require("./terminal");
 
 const padString = (str, width = 8) => {
   const length = str.length;
@@ -10,11 +12,11 @@ const padString = (str, width = 8) => {
   return str + " ".repeat(paddingLength);
 };
 
-const getCommitsLastYearEvents = async () => {
+const exportCommitsLastYear = async () => {
   const data = await getCommitsLastYear();
 
-  return {
-    events: [
+  return await exportSvg(
+    [
       { type: "output", text: "$ " },
       { type: "type", text: "commits get --from=last-year\r\n" },
       { type: "wait", ms: 1000 },
@@ -24,15 +26,15 @@ const getCommitsLastYearEvents = async () => {
       { type: "wait", ms: 8000 },
       { type: "clear" },
     ],
-    rows: 4,
-  };
+    4,
+  );
 };
 
-const getTopLanguagesEvents = async (top = 10) => {
+const exportTopLanguages = async (top = 10) => {
   const data = await getTopLanguages(top);
 
-  return {
-    events: [
+  return await exportSvg(
+    [
       { type: "output", text: "$ " },
       { type: "type", text: `languages list | sort -hr | head -n ${top}\r\n` },
       { type: "wait", ms: 1000 },
@@ -45,15 +47,15 @@ const getTopLanguagesEvents = async (top = 10) => {
       { type: "wait", ms: 8000 },
       { type: "clear" },
     ],
-    rows: 13,
-  };
+    13,
+  );
 };
 
-const getTopRepositoriesEvents = async (top = 5) => {
+const exportTopRepositories = async (top = 5) => {
   const data = await getTopRepositories(top);
 
-  return {
-    events: [
+  return exportSvg(
+    [
       { type: "output", text: "$ " },
       { type: "type", text: `repos list | sort -hr | head -n ${top}\r\n` },
       { type: "wait", ms: 1000 },
@@ -66,12 +68,13 @@ const getTopRepositoriesEvents = async (top = 5) => {
       { type: "wait", ms: 8000 },
       { type: "clear" },
     ],
-    rows: 8,
-  };
+    8,
+  );
 };
 
 module.exports = {
-  getCommitsLastYearEvents,
-  getTopLanguagesEvents,
-  getTopRepositoriesEvents,
+  exportCommitsLastYear,
+  exportTopLanguages,
+  exportTopRepositories,
+  CACHE_TTL,
 };

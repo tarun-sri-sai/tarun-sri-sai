@@ -1,4 +1,4 @@
-const { cached } = require("../cache");
+const { cached } = require("./cache");
 
 const API_URL = "https://api.github.com/graphql";
 const API_VERSION = "2022-11-28";

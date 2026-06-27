@@ -1,5 +1,5 @@
 # GitHub Stats
 
-![](https://tarun-sri-sai.vercel.app/api/commits-last-year)
-![](https://tarun-sri-sai.vercel.app/api/top-languages)
-![](https://tarun-sri-sai.vercel.app/api/top-repos)
+![](https://tarun-sri-sai.vercel.app/api/github/commits-last-year)
+![](https://tarun-sri-sai.vercel.app/api/github/top-languages)
+![](https://tarun-sri-sai.vercel.app/api/github/top-repos)

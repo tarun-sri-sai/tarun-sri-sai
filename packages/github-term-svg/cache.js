@@ -5,7 +5,7 @@ const crypto = require("crypto");
 const stringify = require("fast-json-stable-stringify");
 const { Duration } = require("luxon");
 
-const CACHE_TTL = Duration.fromObject({ days: 7 });
+const CACHE_TTL = Duration.fromObject({ days: 1 });
 
 const cache = new Keyv({
   store: new KeyvRedis(process.env.REDIS_URL),

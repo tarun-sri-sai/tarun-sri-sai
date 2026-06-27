@@ -1,7 +1,6 @@
+# ignore node modules
 node_modules/
-dist/
-!.env*.example
-*.log
 
-.vercel
+# ignore .env files except examples
 .env*
+!.env*.example
