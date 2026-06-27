@@ -4,3 +4,6 @@ node_modules/
 # ignore .env files except examples
 .env*
 !.env*.example
+
+# ignore vercel build directory
+.vercel
