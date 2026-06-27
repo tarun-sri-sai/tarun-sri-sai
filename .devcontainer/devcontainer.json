@@ -1,8 +1,0 @@
-{
-  "name": "Node 20 Dev Container",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
-  "forwardPorts": [3000],
-  "remoteUser": "node"
-}
