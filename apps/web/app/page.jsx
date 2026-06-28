@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 const Home = () => {
-  notFound();
+  redirect("/blog");
 };
 
 export default Home;
