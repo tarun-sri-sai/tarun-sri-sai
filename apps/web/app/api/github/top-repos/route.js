@@ -1,5 +1,5 @@
 import { exportTopRepositories } from "@tarun-sri-sai/github-term-svg";
-import { getSvgHeaders } from "@/lib/svg/headers";
+import { getSvgHeaders } from "@/lib/svg";
 
 export const GET = async () => {
   try {

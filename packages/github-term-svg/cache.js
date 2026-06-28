@@ -8,7 +8,7 @@ const { Duration } = require("luxon");
 const CACHE_TTL = Duration.fromObject({ days: 1 });
 
 const cache = new Keyv({
-  store: new KeyvRedis(process.env.REDIS_URL),
+  store: new KeyvRedis(process.env.API_GITHUB_REDIS_URL),
   ttl: CACHE_TTL.as("milliseconds"),
 });
 

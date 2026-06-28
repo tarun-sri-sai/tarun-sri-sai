@@ -2,8 +2,8 @@ const { cached } = require("./cache");
 
 const API_URL = "https://api.github.com/graphql";
 const API_VERSION = "2022-11-28";
-const API_KEY = process.env.GITHUB_TOKEN;
-const USERNAME = process.env.GITHUB_USERNAME;
+const API_KEY = process.env.API_GITHUB_GITHUB_TOKEN;
+const USERNAME = process.env.API_GITHUB_GITHUB_USERNAME;
 
 const isAuthenticated = !!API_KEY;
 
