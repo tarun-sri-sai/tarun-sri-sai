@@ -4,3 +4,13 @@ node_modules/
 # ignore .env files except examples
 .env*
 !.env*.example
+
+# ignore nextjs directories
+.next/
+out/
+
+# ignore production build directory
+build/
+
+# ignore vercel directory
+.vercel/
