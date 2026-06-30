@@ -4,6 +4,10 @@ const zlib = require("zlib");
 const crypto = require("crypto");
 const stringify = require("fast-json-stable-stringify");
 const { Duration } = require("luxon");
+const { promisify } = require("util");
+
+const gzip = promisify(zlib.gzip);
+const gunzip = promisify(zlib.gunzip);
 
 const CACHE_TTL = Duration.fromObject({ days: 1 });
 
@@ -22,12 +26,16 @@ const cached = (fn, { ttl } = {}) => {
       .digest("hex");
 
     const cachedValue = await cache.get(key);
+
     if (cachedValue !== undefined) {
-      return JSON.parse(zlib.gunzipSync(cachedValue).toString("utf8"));
+      const extracted = await gunzip(cachedValue);
+      return JSON.parse(extracted.toString("utf8"));
     }
 
     const result = await fn(...args);
-    await cache.set(key, zlib.gzipSync(Buffer.from(JSON.stringify(result))), ttl);
+    const compressed = await gzip(JSON.stringify(result));
+    await cache.set(key, compressed, ttl);
+
     return result;
   };
 };
