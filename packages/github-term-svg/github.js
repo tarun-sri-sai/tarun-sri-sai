@@ -1,5 +1,5 @@
-const { Duration } = require("luxon");
-const { cached } = require("@tarun-sri-sai/function-cache");
+import { Duration } from "luxon";
+import { cached } from "@tarun-sri-sai/function-cache";
 
 const API_URL = "https://api.github.com/graphql";
 const API_VERSION = "2022-11-28";
@@ -56,18 +56,21 @@ const getRepositories = async (top = 100) => {
   return data.user.repositories.nodes.map((repo) => repo.name);
 };
 
-const getCommitsLastYear = async () => {
-  try {
-    const repos = await cached(getRepositories)();
+export const getCommitsLastYear = cached(
+  async () => {
+    try {
+      const repos = await cached(getRepositories, {
+        ttl: CACHE_TTL.as("milliseconds"),
+      })();
 
-    const fromDate = new Date();
-    fromDate.setDate(fromDate.getDate() - 365);
-    const sinceDate = fromDate.toISOString();
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - 365);
+      const sinceDate = fromDate.toISOString();
 
-    let totalCommits = 0;
+      let totalCommits = 0;
 
-    for (const repo of repos) {
-      const query = `
+      for (const repo of repos) {
+        const query = `
         query($owner: String!, $name: String!, $since: GitTimestamp!) {
           repository(owner: $owner, name: $name) {
             defaultBranchRef {
@@ -83,37 +86,42 @@ const getCommitsLastYear = async () => {
         }
       `;
 
-      try {
-        const data = await makeGraphQLRequest(query, {
-          owner: USERNAME,
-          name: repo,
-          since: sinceDate,
-        });
+        try {
+          const data = await makeGraphQLRequest(query, {
+            owner: USERNAME,
+            name: repo,
+            since: sinceDate,
+          });
 
-        if (data.repository?.defaultBranchRef?.target?.history) {
-          totalCommits +=
-            data.repository.defaultBranchRef.target.history.totalCount;
+          if (data.repository?.defaultBranchRef?.target?.history) {
+            totalCommits +=
+              data.repository.defaultBranchRef.target.history.totalCount;
+          }
+        } catch (error) {
+          console.error(`error fetching commits for ${repo}:`, error.message);
         }
-      } catch (error) {
-        console.error(`error fetching commits for ${repo}:`, error.message);
       }
+
+      return totalCommits;
+    } catch (error) {
+      throw new Error(`failed to get commits: ${error.message}`);
     }
+  },
+  { ttl: CACHE_TTL.as("milliseconds") },
+);
 
-    return totalCommits;
-  } catch (error) {
-    throw new Error(`failed to get commits: ${error.message}`);
-  }
-};
+export const getTopLanguages = cached(
+  async (top = 10) => {
+    try {
+      const repos = await cached(getRepositories, {
+        ttl: CACHE_TTL.as("milliseconds"),
+      })();
 
-const getTopLanguages = async (top = 10) => {
-  try {
-    const repos = await cached(getRepositories)();
+      const languageStats = {};
+      let totalSize = 0;
 
-    const languageStats = {};
-    let totalSize = 0;
-
-    for (const repo of repos) {
-      const query = `
+      for (const repo of repos) {
+        const query = `
         query($owner: String!, $name: String!, $top: Int!) {
           repository(owner: $owner, name: $name) {
             languages(first: $top, orderBy: {field: SIZE, direction: DESC}) {
@@ -129,53 +137,58 @@ const getTopLanguages = async (top = 10) => {
         }
       `;
 
-      try {
-        const data = await makeGraphQLRequest(query, {
-          owner: USERNAME,
-          name: repo,
-          top,
-        });
-
-        if (data.repository?.languages) {
-          totalSize += data.repository.languages.totalSize;
-
-          data.repository.languages.edges.forEach((edge) => {
-            const language = edge.node.name;
-            const size = edge.size;
-
-            if (!languageStats[language]) {
-              languageStats[language] = 0;
-            }
-            languageStats[language] += size;
+        try {
+          const data = await makeGraphQLRequest(query, {
+            owner: USERNAME,
+            name: repo,
+            top,
           });
+
+          if (data.repository?.languages) {
+            totalSize += data.repository.languages.totalSize;
+
+            data.repository.languages.edges.forEach((edge) => {
+              const language = edge.node.name;
+              const size = edge.size;
+
+              if (!languageStats[language]) {
+                languageStats[language] = 0;
+              }
+              languageStats[language] += size;
+            });
+          }
+        } catch (error) {
+          console.error(`error fetching languages for ${repo}:`, error.message);
         }
-      } catch (error) {
-        console.error(`error fetching languages for ${repo}:`, error.message);
       }
+
+      const languages = Object.entries(languageStats)
+        .map(([name, size]) => ({
+          name,
+          bytes: size,
+          percentage: totalSize > 0 ? ((size / totalSize) * 100).toFixed(2) : 0,
+        }))
+        .sort((a, b) => b.bytes - a.bytes)
+        .slice(0, top);
+
+      return languages;
+    } catch (error) {
+      throw new Error(`failed to get languages: ${error.message}`);
     }
+  },
+  { ttl: CACHE_TTL.as("milliseconds") },
+);
 
-    const languages = Object.entries(languageStats)
-      .map(([name, size]) => ({
-        name,
-        bytes: size,
-        percentage: totalSize > 0 ? ((size / totalSize) * 100).toFixed(2) : 0,
-      }))
-      .sort((a, b) => b.bytes - a.bytes)
-      .slice(0, top);
+export const getTopRepositories = cached(
+  async (top = 5) => {
+    try {
+      const repos = await cached(getRepositories, {
+        ttl: CACHE_TTL.as("milliseconds"),
+      })();
 
-    return languages;
-  } catch (error) {
-    throw new Error(`failed to get languages: ${error.message}`);
-  }
-};
-
-const getTopRepositories = async (top = 5) => {
-  try {
-    const repos = await cached(getRepositories)();
-
-    const repoStats = [];
-    for (const repo of repos) {
-      const query = `
+      const repoStats = [];
+      for (const repo of repos) {
+        const query = `
         query($owner: String!, $name: String!) {
           repository(owner: $owner, name: $name) {
             defaultBranchRef {
@@ -191,40 +204,34 @@ const getTopRepositories = async (top = 5) => {
         }
       `;
 
-      try {
-        const data = await makeGraphQLRequest(query, {
-          owner: USERNAME,
-          name: repo,
-        });
+        try {
+          const data = await makeGraphQLRequest(query, {
+            owner: USERNAME,
+            name: repo,
+          });
 
-        const commitCount =
-          data.repository?.defaultBranchRef?.target?.history?.totalCount || 0;
-        repoStats.push({
-          name: repo,
-          commits: commitCount,
-        });
-      } catch (error) {
-        console.error(
-          `error fetching commit count for ${repo}:`,
-          error.message,
-        );
-        repoStats.push({
-          name: repo,
-          commits: 0,
-        });
+          const commitCount =
+            data.repository?.defaultBranchRef?.target?.history?.totalCount || 0;
+          repoStats.push({
+            name: repo,
+            commits: commitCount,
+          });
+        } catch (error) {
+          console.error(
+            `error fetching commit count for ${repo}:`,
+            error.message,
+          );
+          repoStats.push({
+            name: repo,
+            commits: 0,
+          });
+        }
       }
+
+      return repoStats.sort((a, b) => b.commits - a.commits).slice(0, top);
+    } catch (error) {
+      throw new Error(`failed to get repositories: ${error.message}`);
     }
-
-    return repoStats.sort((a, b) => b.commits - a.commits).slice(0, top);
-  } catch (error) {
-    throw new Error(`failed to get repositories: ${error.message}`);
-  }
-};
-
-module.exports = {
-  getCommitsLastYear: cached(getCommitsLastYear, { ttl: CACHE_TTL.as("milliseconds") }),
-
-  getTopLanguages: cached(getTopLanguages, { ttl: CACHE_TTL.as("milliseconds") }),
-
-  getTopRepositories: cached(getTopRepositories, { ttl: CACHE_TTL.as("milliseconds") }),
-};
+  },
+  { ttl: CACHE_TTL.as("milliseconds") },
+);

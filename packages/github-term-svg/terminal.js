@@ -1,6 +1,6 @@
-const { Duration } = require("luxon");
-const { render } = require("svg-term");
-const { cached } = require("@tarun-sri-sai/function-cache");
+import { Duration } from "luxon";
+import { render } from "svg-term";
+import { cached } from "@tarun-sri-sai/function-cache";
 
 const CACHE_TTL = Duration.fromObject({ days: 1 });
 
@@ -42,17 +42,16 @@ const exportAsciicast = async (events, rows = 12) => {
   ].join("\n");
 };
 
-const exportSvg = async (events = [], rows) => {
-  const asciicast = await exportAsciicast(events, rows);
-  return render(asciicast, {
-    theme: {
-      background: [13, 17, 23],
-      text: [240, 246, 252],
-      cursor: [240, 246, 252],
-    },
-  });
-};
-
-module.exports = {
-  exportSvg: cached(exportSvg, { ttl: CACHE_TTL.as("milliseconds") }),
-};
+export const exportSvg = cached(
+  async (events = [], rows) => {
+    const asciicast = await exportAsciicast(events, rows);
+    return render(asciicast, {
+      theme: {
+        background: [13, 17, 23],
+        text: [240, 246, 252],
+        cursor: [240, 246, 252],
+      },
+    });
+  },
+  { ttl: CACHE_TTL.as("milliseconds") },
+);

@@ -1,10 +1,10 @@
-const Keyv = require("keyv").default;
-const KeyvRedis = require("@keyv/redis").default;
-const zlib = require("zlib");
-const crypto = require("crypto");
-const stringify = require("fast-json-stable-stringify");
-const { Duration } = require("luxon");
-const { promisify } = require("util");
+import Keyv from "keyv";
+import KeyvRedis from "@keyv/redis";
+import zlib from "zlib";
+import crypto from "crypto";
+import stringify from "fast-json-stable-stringify";
+import { Duration } from "luxon";
+import { promisify } from "util";
 
 const gzip = promisify(zlib.gzip);
 const gunzip = promisify(zlib.gunzip);
@@ -18,7 +18,7 @@ const cache = new Keyv({
 
 cache.on("error", (err) => console.error(`keyv error: ${err}`));
 
-const cached = (fn, { ttl } = {}) => {
+export const cached = (fn, { ttl } = {}) => {
   return async (...args) => {
     const key = crypto
       .createHash("sha256")
@@ -38,8 +38,4 @@ const cached = (fn, { ttl } = {}) => {
 
     return result;
   };
-};
-
-module.exports = {
-  cached,
 };
