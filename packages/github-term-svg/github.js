@@ -1,9 +1,11 @@
-const { cached } = require("./cache");
+const { Duration } = require("luxon");
+const { cached } = require("@tarun-sri-sai/function-cache");
 
 const API_URL = "https://api.github.com/graphql";
 const API_VERSION = "2022-11-28";
 const API_KEY = process.env.API_GITHUB_GITHUB_TOKEN;
 const USERNAME = process.env.API_GITHUB_GITHUB_USERNAME;
+const CACHE_TTL = Duration.fromObject({ days: 1 });
 
 const isAuthenticated = !!API_KEY;
 
@@ -220,9 +222,9 @@ const getTopRepositories = async (top = 5) => {
 };
 
 module.exports = {
-  getCommitsLastYear: cached(getCommitsLastYear),
+  getCommitsLastYear: cached(getCommitsLastYear, { ttl: CACHE_TTL.as("milliseconds") }),
 
-  getTopLanguages: cached(getTopLanguages),
+  getTopLanguages: cached(getTopLanguages, { ttl: CACHE_TTL.as("milliseconds") }),
 
-  getTopRepositories: cached(getTopRepositories),
+  getTopRepositories: cached(getTopRepositories, { ttl: CACHE_TTL.as("milliseconds") }),
 };

@@ -8,13 +8,13 @@ const { Duration } = require("luxon");
 const CACHE_TTL = Duration.fromObject({ days: 1 });
 
 const cache = new Keyv({
-  store: new KeyvRedis(process.env.API_GITHUB_REDIS_URL),
+  store: new KeyvRedis(process.env.FUNC_CACHE_REDIS_URL),
   ttl: CACHE_TTL.as("milliseconds"),
 });
 
 cache.on("error", (err) => console.error(`keyv error: ${err}`));
 
-const cached = (fn) => {
+const cached = (fn, { ttl } = {}) => {
   return async (...args) => {
     const key = crypto
       .createHash("sha256")
@@ -27,12 +27,11 @@ const cached = (fn) => {
     }
 
     const result = await fn(...args);
-    await cache.set(key, zlib.gzipSync(Buffer.from(JSON.stringify(result))));
+    await cache.set(key, zlib.gzipSync(Buffer.from(JSON.stringify(result))), ttl);
     return result;
   };
 };
 
 module.exports = {
   cached,
-  CACHE_TTL,
 };

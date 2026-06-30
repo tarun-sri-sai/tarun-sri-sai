@@ -3,7 +3,6 @@ const {
   getTopLanguages,
   getTopRepositories,
 } = require("./github");
-const { CACHE_TTL } = require("./cache");
 const { exportSvg } = require("./terminal");
 
 const padString = (str, width = 8) => {
@@ -76,5 +75,4 @@ module.exports = {
   exportCommitsLastYear,
   exportTopLanguages,
   exportTopRepositories,
-  CACHE_TTL,
 };

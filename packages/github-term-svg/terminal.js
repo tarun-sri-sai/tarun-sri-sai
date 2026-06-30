@@ -1,5 +1,8 @@
-const { cached } = require("./cache");
+const { Duration } = require("luxon");
 const { render } = require("svg-term");
+const { cached } = require("@tarun-sri-sai/function-cache");
+
+const CACHE_TTL = Duration.fromObject({ days: 1 });
 
 const exportAsciicast = async (events, rows = 12) => {
   const records = [];
@@ -51,5 +54,5 @@ const exportSvg = async (events = [], rows) => {
 };
 
 module.exports = {
-  exportSvg: cached(exportSvg),
+  exportSvg: cached(exportSvg, { ttl: CACHE_TTL.as("milliseconds") }),
 };
