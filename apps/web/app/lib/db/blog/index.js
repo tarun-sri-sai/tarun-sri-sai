@@ -2,13 +2,26 @@ import { createClient } from "@libsql/client";
 import { Duration } from "luxon";
 import { cached } from "@tarun-sri-sai/function-cache";
 
-const db = createClient({
-  url: process.env.BLOG_TURSO_DATABASE_URL,
-  authToken: process.env.BLOG_TURSO_AUTH_TOKEN,
-});
+let db;
+
+const getDb = () => {
+  if (db) {
+    return db;
+  }
+
+  const url = process.env.BLOG_TURSO_DATABASE_URL;
+  const authToken = process.env.BLOG_TURSO_AUTH_TOKEN;
+
+  db = createClient({
+    url,
+    authToken,
+  });
+  return db;
+};
 
 export const getRecentBlogs = cached(
   async () => {
+    const db = getDb();
     const result = await db.execute(`
     WITH latest_history AS (
       SELECT
@@ -40,6 +53,7 @@ export const getRecentBlogs = cached(
 
 export const getBlog = cached(
   async (slug) => {
+    const db = getDb();
     const result = await db.execute({
       sql: `
       SELECT
