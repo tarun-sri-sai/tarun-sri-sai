@@ -1,10 +1,9 @@
-const {
+import {
   getCommitsLastYear,
   getTopLanguages,
   getTopRepositories,
-} = require("./github");
-const { CACHE_TTL } = require("./cache");
-const { exportSvg } = require("./terminal");
+} from "./github";
+import { exportSvg } from "./terminal";
 
 const padString = (str, width = 8) => {
   const length = str.length;
@@ -12,7 +11,7 @@ const padString = (str, width = 8) => {
   return str + " ".repeat(paddingLength);
 };
 
-const exportCommitsLastYear = async () => {
+export const exportCommitsLastYear = async () => {
   const data = await getCommitsLastYear();
 
   return await exportSvg(
@@ -30,7 +29,7 @@ const exportCommitsLastYear = async () => {
   );
 };
 
-const exportTopLanguages = async (top = 10) => {
+export const exportTopLanguages = async (top = 10) => {
   const data = await getTopLanguages(top);
 
   return await exportSvg(
@@ -51,7 +50,7 @@ const exportTopLanguages = async (top = 10) => {
   );
 };
 
-const exportTopRepositories = async (top = 5) => {
+export const exportTopRepositories = async (top = 5) => {
   const data = await getTopRepositories(top);
 
   return exportSvg(
@@ -70,11 +69,4 @@ const exportTopRepositories = async (top = 5) => {
     ],
     8,
   );
-};
-
-module.exports = {
-  exportCommitsLastYear,
-  exportTopLanguages,
-  exportTopRepositories,
-  CACHE_TTL,
 };
