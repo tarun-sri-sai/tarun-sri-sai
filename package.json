@@ -4,12 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "pnpm --filter web build",
+    "start": "pnpm --filter web start",
+    "dev": "pnpm --filter web dev"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.34.4",
+  "engines": {
+    "node": ">=20.20.2"
+  },
   "devDependencies": {
     "prettier": "^3.9.3",
     "prettier-plugin-sort-json": "^4.2.0"

@@ -53,8 +53,8 @@ export const getBlog = cached(
       ORDER BY bh.created_at DESC
       LIMIT 1;
     `,
-    args: [slug]
-  });
+      args: [slug],
+    });
 
     return result;
   },
