@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getBlog } from "@/lib/db/blog";
 import DOMPurify from "isomorphic-dompurify";
 
+export const dynamic = "force-dynamic";
+
 const BlogPostPage = async ({ params }) => {
   const { slug } = await params;
 

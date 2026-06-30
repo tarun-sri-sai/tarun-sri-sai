@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getRecentBlogs } from "@/lib/db/blog";
 
+export const dynamic = "force-dynamic";
+
 const BlogPage = async () => {
   const recentBlogsResult = await getRecentBlogs();
   const columnMap = Object.fromEntries(

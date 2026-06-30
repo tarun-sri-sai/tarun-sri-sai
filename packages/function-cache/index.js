@@ -9,17 +9,29 @@ import { promisify } from "util";
 const gzip = promisify(zlib.gzip);
 const gunzip = promisify(zlib.gunzip);
 
-const CACHE_TTL = Duration.fromObject({ days: 1 });
+let cache;
 
-const cache = new Keyv({
-  store: new KeyvRedis(process.env.FUNC_CACHE_REDIS_URL),
-  ttl: CACHE_TTL.as("milliseconds"),
-});
+const getCache = () => {
+  if (cache) {
+    return cache;
+  }
 
-cache.on("error", (err) => console.error(`keyv error: ${err}`));
+  cache = new Keyv({
+    store: new KeyvRedis(process.env.FUNC_CACHE_REDIS_URL),
+    ttl: Duration.fromObject({ days: 1 }).as("milliseconds"),
+  });
+
+  cache.on("error", (err) =>
+    console.error(`keyv initialization error: ${err}`),
+  );
+
+  return cache;
+};
 
 export const cached = (fn, { ttl } = {}) => {
   return async (...args) => {
+    const cache = getCache();
+
     const key = crypto
       .createHash("sha256")
       .update(`${fn.name}:${stringify(args)}`)
