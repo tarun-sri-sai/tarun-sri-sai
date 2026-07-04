@@ -96,7 +96,7 @@ const BlogPostPage = async ({ params }) => {
               />
               <p>Tarun Sri Sai</p>
             </div>
-            <p>{`Last edited on: ${new Date(blogRow[columnMap.blogResult["created_at"]])}`}</p>
+            <p>{`Last edited on: ${new Date(blogRow[columnMap.blogResult["created_at"]] * 1000)}`}</p>
           </footer>
         </div>
       </div>
