@@ -3,6 +3,12 @@ import { getRecentBlogs } from "@/lib/db/blog";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Tarun Sri Sai - Blog",
+  description:
+    "Welcome to my blog! I write about software, take it or leave it.",
+};
+
 const BlogPage = async () => {
   const recentBlogsResult = await getRecentBlogs();
   const columnMap = Object.fromEntries(
@@ -10,13 +16,13 @@ const BlogPage = async () => {
   );
 
   return (
-    <>
+    <div className="content-container">
       <header>
         <h1>Welcome to my blog!</h1>
       </header>
-      <main>
+      <main className="content">
         <section>
-          <h2>Recent Blogs</h2>
+          <h2>Recent</h2>
 
           <ul>
             {[...recentBlogsResult.rows]
@@ -35,7 +41,7 @@ const BlogPage = async () => {
           </ul>
         </section>
       </main>
-    </>
+    </div>
   );
 };
 

@@ -1,0 +1,65 @@
+:root {
+  --color-scheme-background: #121212;
+  --color-scheme-primary-text: #e0e0e0;
+  --color-scheme-secondary-text: #b0b0b0;
+  --color-scheme-border: #444444;
+  --color-scheme-accent: #888888;
+}
+
+body {
+  background-color: var(--color-scheme-background);
+  color: var(--color-scheme-primary-text);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+blockquote {
+  margin: 1.5rem 0;
+  padding: 0.5rem 1.5rem;
+  border-left: 0.25rem solid var(--color-scheme-border);
+  font-style: italic;
+  color: var(--color-scheme-secondary-text);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+blockquote p {
+  margin: 0;
+}
+
+footer {
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--color-scheme-accent);
+}
+
+blockquote footer::before {
+  content: "";
+}
+
+a {
+  color: inherit;
+  text-decoration-color: color-mix(in srgb, currentColor 70%, transparent);
+}
+
+a:hover {
+  text-decoration-color: color-mix(in srgb, currentColor 100%, transparent);
+}
+
+.content-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.content {
+  width: 40rem;
+  max-width: 90%;
+}
+
+@media (max-width: 768px) {
+  .content {
+    width: 90%;
+  }
+}
