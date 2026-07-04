@@ -7,7 +7,7 @@ export async function up(client) {
   await client.execute(`CREATE TABLE IF NOT EXISTS blogs (
   id INTEGER PRIMARY KEY,
   slug TEXT UNIQUE NOT NULL,
-  created_at DATETIME NOT NULL
+  created_at DATETIME NOT NULL DEFAULT (unixepoch('now'))
 );`);
 
   await client.execute(
@@ -16,7 +16,7 @@ export async function up(client) {
 
   await client.execute(`CREATE TABLE IF NOT EXISTS blog_history (
   blog_id INTEGER NOT NULL,
-  created_at DATETIME NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT (unixepoch('now')),
   title TEXT NOT NULL,
   content TEXT NOT NULL,
 
