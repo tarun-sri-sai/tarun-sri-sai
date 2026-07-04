@@ -57,6 +57,7 @@ export const getBlog = cached(
     const result = await db.execute({
       sql: `
       SELECT
+        b.id,
         bh.title,
         bh.content,
         bh.created_at
@@ -68,6 +69,27 @@ export const getBlog = cached(
       LIMIT 1;
     `,
       args: [slug],
+    });
+
+    return result;
+  },
+  { ttl: Duration.fromObject({ hours: 1 }).as("milliseconds") },
+);
+
+export const getBlogTags = cached(
+  async (blogId) => {
+    const db = getDb();
+    const result = await db.execute({
+      sql: `
+        SELECT
+          t.title
+        FROM tags t
+        JOIN blog_tags bt
+        ON bt.tag_id = t.id
+        WHERE bt.blog_id = ?
+        ORDER BY t.title ASC;
+      `,
+      args: [blogId],
     });
 
     return result;
