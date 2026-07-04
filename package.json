@@ -6,7 +6,9 @@
   "scripts": {
     "build": "pnpm --filter web build",
     "start": "pnpm --filter web start",
-    "dev": "pnpm --filter web dev"
+    "dev": "pnpm --filter web dev",
+    "format": "prettier --write .",
+    "migrate": "libsql-migrate up"
   },
   "keywords": [],
   "author": "",
@@ -18,5 +20,9 @@
   "devDependencies": {
     "prettier": "^3.9.3",
     "prettier-plugin-sort-json": "^4.2.0"
+  },
+  "type": "module",
+  "dependencies": {
+    "libsql-migrate": "^1.3.5"
   }
 }

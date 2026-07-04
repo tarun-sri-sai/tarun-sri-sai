@@ -19,7 +19,9 @@ const BlogPostPage = async ({ params }) => {
         <header>
           <h1>{blogRow[columnMap["title"]]}</h1>
         </header>
-        <main dangerouslySetInnerHTML={{ __html: blogRow[columnMap["content"]] }} />
+        <main
+          dangerouslySetInnerHTML={{ __html: blogRow[columnMap["content"]] }}
+        />
         <footer>
           <p>{`Last edited on: ${new Date(blogRow[columnMap["created_at"]])}`}</p>
         </footer>
