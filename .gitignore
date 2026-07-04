@@ -13,4 +13,7 @@ out/
 build/
 
 # ignore vercel directory
-.vercel/
+.vercel
+
+# ignore libsql-migrate config
+libsqlrc.js
