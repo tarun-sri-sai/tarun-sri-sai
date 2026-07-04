@@ -48,7 +48,7 @@ export const getRecentBlogs = cached(
 
     return result;
   },
-  { ttl: Duration.fromObject({ hours: 1 }).as("milliseconds") },
+  { ttl: Duration.fromObject({ days: 1 }).as("milliseconds") },
 );
 
 export const getBlog = cached(
@@ -73,7 +73,7 @@ export const getBlog = cached(
 
     return result;
   },
-  { ttl: Duration.fromObject({ hours: 1 }).as("milliseconds") },
+  { ttl: Duration.fromObject({ days: 1 }).as("milliseconds") },
 );
 
 export const getBlogTags = cached(
@@ -94,5 +94,5 @@ export const getBlogTags = cached(
 
     return result;
   },
-  { ttl: Duration.fromObject({ hours: 1 }).as("milliseconds") },
+  { ttl: Duration.fromObject({ days: 1 }).as("milliseconds") },
 );

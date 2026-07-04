@@ -3,7 +3,7 @@ import Image from "next/image";
 import { getBlog, getBlogTags } from "@/lib/db/blog";
 import { addHeadingLinks } from "@/lib/html";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 86400;
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
