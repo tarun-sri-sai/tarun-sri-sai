@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { getBlog, getBlogTags } from "@/lib/db/blog";
-import { addHeadingLinks } from "@/lib/html";
 
 export const revalidate = 86400;
 
@@ -49,7 +48,7 @@ const BlogPostPage = async ({ params }) => {
 
     const blogRow = blogResult.rows[0];
 
-    const content = addHeadingLinks(blogRow[columnMap.blogResult["content"]]);
+    const content = blogRow[columnMap.blogResult["content"]];
 
     const tagsResult = await getBlogTags(blogRow[columnMap.blogResult["id"]]);
     columnMap.tagsResult = Object.fromEntries(
