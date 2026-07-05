@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { getBlog, getBlogTags } from "@/lib/db/blog";
+import styles from "./page.module.css";
 
 export const revalidate = 86400;
 
@@ -56,7 +57,7 @@ const BlogPostPage = async ({ params }) => {
     );
 
     return (
-      <div className="content-container">
+      <div className={`content-container ${styles.page}`}>
         <div className="content">
           <header>
             <h1>{blogRow[columnMap.blogResult["title"]]}</h1>
