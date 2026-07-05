@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getRecentBlogs } from "@/lib/db/blog";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 86400;
 
 export const metadata = {
   title: "Tarun Sri Sai - Blog",

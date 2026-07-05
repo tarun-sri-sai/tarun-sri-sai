@@ -39,10 +39,16 @@ blockquote footer::before {
 
 a {
   color: inherit;
+  text-decoration: none;
+}
+
+a:not(:is(h1, h2, h3, h4, h5, h6) a) {
+  text-decoration: underline;
   text-decoration-color: color-mix(in srgb, currentColor 70%, transparent);
 }
 
 a:hover {
+  text-decoration: underline;
   text-decoration-color: color-mix(in srgb, currentColor 100%, transparent);
 }
 
@@ -54,7 +60,7 @@ a:hover {
 }
 
 .content {
-  width: 40rem;
+  width: 50rem;
   max-width: 90%;
 }
 
@@ -62,4 +68,11 @@ a:hover {
   .content {
     width: 90%;
   }
+}
+
+.tag {
+  background-color: var(--color-scheme-border);
+  color: var(--color-scheme-primary-text);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
 }
