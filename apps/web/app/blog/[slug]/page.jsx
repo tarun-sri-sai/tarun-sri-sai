@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { getBlog, getBlogTags } from "@/lib/db/blog";
+import { getBlogCached, getBlogTagsCached } from "@/lib/db/blog";
 import styles from "./page.module.css";
 
 export const revalidate = 86400;
@@ -15,14 +15,14 @@ export const generateMetadata = async ({ params }) => {
   try {
     const columnMap = {};
 
-    const blogResult = await getBlog(slug);
+    const blogResult = await getBlogCached(slug);
     columnMap.blogResult = Object.fromEntries(
       blogResult.columns.map((v, i) => [v, i]),
     );
 
     const blogRow = blogResult.rows[0];
 
-    const tagsResult = await getBlogTags(blogRow[columnMap.blogResult["id"]]);
+    const tagsResult = await getBlogTagsCached(blogRow[columnMap.blogResult["id"]]);
     columnMap.tagsResult = Object.fromEntries(
       tagsResult.columns.map((v, i) => [v, i]),
     );
@@ -46,7 +46,7 @@ const BlogPostPage = async ({ params }) => {
   try {
     const columnMap = {};
 
-    const blogResult = await getBlog(slug);
+    const blogResult = await getBlogCached(slug);
     columnMap.blogResult = Object.fromEntries(
       blogResult.columns.map((v, i) => [v, i]),
     );
@@ -55,7 +55,7 @@ const BlogPostPage = async ({ params }) => {
 
     const content = blogRow[columnMap.blogResult["content"]];
 
-    const tagsResult = await getBlogTags(blogRow[columnMap.blogResult["id"]]);
+    const tagsResult = await getBlogTagsCached(blogRow[columnMap.blogResult["id"]]);
     columnMap.tagsResult = Object.fromEntries(
       tagsResult.columns.map((v, i) => [v, i]),
     );
