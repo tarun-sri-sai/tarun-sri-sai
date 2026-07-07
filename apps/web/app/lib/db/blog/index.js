@@ -1,6 +1,7 @@
 import { createClient } from "@libsql/client";
 import { Duration } from "luxon";
 import { cached } from "@tarun-sri-sai/function-cache";
+import { unstable_cache } from "next/cache";
 
 let db;
 
@@ -19,55 +20,61 @@ const getDb = () => {
   return db;
 };
 
-export const getRecentBlogs = cached(
+const getRecentBlogs = cached(
   async () => {
     const db = getDb();
     const result = await db.execute(`
-    WITH latest_history AS (
+      WITH latest_history AS (
+        SELECT
+          blog_id,
+          title,
+          ROW_NUMBER() OVER (
+            PARTITION BY blog_id
+            ORDER BY created_at DESC
+          ) AS rn
+        FROM blog_history
+      )
       SELECT
-        blog_id,
-        title,
-        ROW_NUMBER() OVER (
-          PARTITION BY blog_id
-          ORDER BY created_at DESC
-        ) AS rn
-      FROM blog_history
-    )
-    SELECT
-      b.id,
-      b.slug,
-      b.created_at,
-      lh.title
-    FROM blogs b
-    JOIN latest_history lh
-      ON lh.blog_id = b.id
-    AND lh.rn = 1
-    ORDER BY b.created_at DESC
-    LIMIT 10;
-  `);
+        b.id,
+        b.slug,
+        b.created_at,
+        lh.title
+      FROM blogs b
+      JOIN latest_history lh
+        ON lh.blog_id = b.id
+      AND lh.rn = 1
+      ORDER BY b.created_at DESC
+      LIMIT 10;
+    `);
 
     return result;
   },
   { ttl: Duration.fromObject({ days: 1 }).as("milliseconds") },
 );
 
-export const getBlog = cached(
+export const getRecentBlogsCached = unstable_cache(
+  () => getRecentBlogs(),
+  ["get-recent-blogs"],
+  { revalidate: Duration.fromObject({ days: 1 }).as("seconds") },
+);
+
+const getBlog = cached(
   async (slug) => {
     const db = getDb();
     const result = await db.execute({
       sql: `
-      SELECT
-        b.id,
-        bh.title,
-        bh.content,
-        bh.created_at
-      FROM blog_history bh
-      JOIN blogs b
-      ON bh.blog_id = b.id
-      WHERE b.slug = ?
-      ORDER BY bh.created_at DESC
-      LIMIT 1;
-    `,
+        SELECT
+          b.id,
+          bh.title,
+          bh.content,
+          bh.created_at
+        FROM blog_history bh
+        JOIN blogs b
+        ON bh.blog_id = b.id
+        WHERE b.slug = ?
+        ORDER BY bh.created_at DESC
+        LIMIT 1;
+      `,
       args: [slug],
     });
 
@@ -76,7 +83,13 @@ export const getBlog = cached(
   { ttl: Duration.fromObject({ days: 1 }).as("milliseconds") },
 );
 
-export const getBlogTags = cached(
+export const getBlogCached = unstable_cache(
+  (slug) => getBlog(slug),
+  ["get-blog"],
+  { revalidate: Duration.fromObject({ days: 1 }).as("seconds") },
+);
+
+const getBlogTags = cached(
   async (blogId) => {
     const db = getDb();
     const result = await db.execute({
@@ -95,4 +108,10 @@ export const getBlogTags = cached(
     return result;
   },
   { ttl: Duration.fromObject({ days: 1 }).as("milliseconds") },
+);
+
+export const getBlogTagsCached = unstable_cache(
+  (blogId) => getBlogTags(blogId),
+  ["get-blog-tags"],
+  { revalidate: Duration.fromObject({ days: 1 }).as("seconds") },
 );

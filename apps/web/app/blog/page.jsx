@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getRecentBlogs } from "@/lib/db/blog";
+import { getRecentBlogsCached } from "@/lib/db/blog";
 
 export const revalidate = 86400;
 
@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 const BlogPage = async () => {
-  const recentBlogsResult = await getRecentBlogs();
+  const recentBlogsResult = await getRecentBlogsCached();
   const columnMap = Object.fromEntries(
     recentBlogsResult.columns.map((v, i) => [v, i]),
   );
