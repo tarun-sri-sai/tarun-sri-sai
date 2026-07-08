@@ -1,7 +1,5 @@
 import { createClient } from "@libsql/client";
-import { Duration } from "luxon";
 import { cached } from "@tarun-sri-sai/function-cache";
-import { unstable_cache } from "next/cache";
 
 let db;
 
@@ -20,10 +18,9 @@ const getDb = () => {
   return db;
 };
 
-const getRecentBlogs = cached(
-  async () => {
-    const db = getDb();
-    const result = await db.execute(`
+const getRecentBlogs = async () => {
+  const db = getDb();
+  const result = await db.execute(`
       WITH latest_history AS (
         SELECT
           blog_id,
@@ -47,22 +44,14 @@ const getRecentBlogs = cached(
       LIMIT 10;
     `);
 
-    return result;
-  },
-  { ttl: Duration.fromObject({ days: 1 }).as("milliseconds") },
-);
+  return result;
+};
 
-export const getRecentBlogsCached = unstable_cache(
-  () => getRecentBlogs(),
-  ["get-recent-blogs"],
-  { revalidate: Duration.fromObject({ days: 1 }).as("seconds") },
-);
-
-const getBlog = cached(
-  async (slug) => {
-    const db = getDb();
-    const result = await db.execute({
-      sql: `
+export const getRecentBlogsCached = cached(getRecentBlogs);
+const getBlog = async (slug) => {
+  const db = getDb();
+  const result = await db.execute({
+    sql: `
         SELECT
           b.id,
           bh.title,
@@ -75,25 +64,18 @@ const getBlog = cached(
         ORDER BY bh.created_at DESC
         LIMIT 1;
       `,
-      args: [slug],
-    });
+    args: [slug],
+  });
 
-    return result;
-  },
-  { ttl: Duration.fromObject({ days: 1 }).as("milliseconds") },
-);
+  return result;
+};
 
-export const getBlogCached = unstable_cache(
-  (slug) => getBlog(slug),
-  ["get-blog"],
-  { revalidate: Duration.fromObject({ days: 1 }).as("seconds") },
-);
+export const getBlogCached = cached(getBlog);
 
-const getBlogTags = cached(
-  async (blogId) => {
-    const db = getDb();
-    const result = await db.execute({
-      sql: `
+const getBlogTags = async (blogId) => {
+  const db = getDb();
+  const result = await db.execute({
+    sql: `
         SELECT
           t.title
         FROM tags t
@@ -102,16 +84,10 @@ const getBlogTags = cached(
         WHERE bt.blog_id = ?
         ORDER BY t.title ASC;
       `,
-      args: [blogId],
-    });
+    args: [blogId],
+  });
 
-    return result;
-  },
-  { ttl: Duration.fromObject({ days: 1 }).as("milliseconds") },
-);
+  return result;
+};
 
-export const getBlogTagsCached = unstable_cache(
-  (blogId) => getBlogTags(blogId),
-  ["get-blog-tags"],
-  { revalidate: Duration.fromObject({ days: 1 }).as("seconds") },
-);
+export const getBlogTagsCached = cached(getBlogTags);

@@ -1,9 +1,9 @@
 import {
-  getCommitsLastYear,
-  getTopLanguages,
-  getTopRepositories,
+  getCommitsLastYearCached,
+  getTopLanguagesCached,
+  getTopRepositoriesCached,
 } from "./github";
-import { exportSvg } from "./terminal";
+import { exportSvgCached } from "./terminal";
 
 const padString = (str, width = 8) => {
   const length = str.length;
@@ -12,9 +12,9 @@ const padString = (str, width = 8) => {
 };
 
 export const exportCommitsLastYear = async () => {
-  const data = await getCommitsLastYear();
+  const data = await getCommitsLastYearCached();
 
-  return await exportSvg(
+  return await exportSvgCached(
     [
       { type: "output", text: "$ " },
       { type: "type", text: "commits get --from=last-year\r\n" },
@@ -30,9 +30,9 @@ export const exportCommitsLastYear = async () => {
 };
 
 export const exportTopLanguages = async (top = 10) => {
-  const data = await getTopLanguages(top);
+  const data = await getTopLanguagesCached(top);
 
-  return await exportSvg(
+  return await exportSvgCached(
     [
       { type: "output", text: "$ " },
       { type: "type", text: `languages list | sort -hr | head -n ${top}\r\n` },
@@ -51,9 +51,9 @@ export const exportTopLanguages = async (top = 10) => {
 };
 
 export const exportTopRepositories = async (top = 5) => {
-  const data = await getTopRepositories(top);
+  const data = await getTopRepositoriesCached(top);
 
-  return exportSvg(
+  return exportSvgCached(
     [
       { type: "output", text: "$ " },
       { type: "type", text: `repos list | sort -hr | head -n ${top}\r\n` },
