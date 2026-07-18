@@ -34,7 +34,7 @@ const Home = () => {
               </a>
             </footer>
           </blockquote>
-          
+
           <p>
             Check out my <Link href={"/blog"}>blog</Link> for some slop-free
             content, or you can check out my{" "}
