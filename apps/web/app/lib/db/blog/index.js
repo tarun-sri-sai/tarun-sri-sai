@@ -91,3 +91,14 @@ const getBlogTags = async (blogId) => {
 };
 
 export const getBlogTagsCached = cached(getBlogTags);
+
+const getContact = async () => {
+  const db = getDb();
+  const result = await db.execute(`
+    SELECT * FROM contact;
+  `);
+
+  return result;
+};
+
+export const getContactCached = cached(getContact);
