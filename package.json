@@ -13,12 +13,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.34.4",
+  "packageManager": "pnpm@11.14.0+sha512.66c1ac4c7d4762d6d7dde44c7f3e5a73591ed0a0806e751d4ed32d4f004f25b2285a906b1fd8a9e3e621df3b4e2858bf88e50e0cf626bedbe977fe434a5caf85",
   "engines": {
-    "node": ">=20.20.2"
+    "node": ">=24.18.0"
   },
   "devDependencies": {
-    "prettier": "^3.9.3",
+    "prettier": "^3.9.5",
     "prettier-plugin-sort-json": "^4.2.0"
   },
   "type": "module",

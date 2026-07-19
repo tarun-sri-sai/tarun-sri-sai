@@ -44,7 +44,7 @@ export const up = async (client) => {
   FOREIGN KEY (tag_id) REFERENCES tags(id),
   FOREIGN KEY (blog_id) REFERENCES blogs(id)
 );`);
-}
+};
 
 /**
  * Migrates the database schema downward, making changes to roll the schema back to a previous version.
@@ -65,4 +65,4 @@ export const down = async (client) => {
   await client.execute(`DROP INDEX IF EXISTS blogs_created_at_idx;`);
 
   await client.execute(`DROP TABLE IF EXISTS blogs;`);
-}
+};

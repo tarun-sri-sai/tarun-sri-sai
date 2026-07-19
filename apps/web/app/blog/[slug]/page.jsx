@@ -6,8 +6,8 @@ import styles from "./page.module.css";
 export const revalidate = 86400;
 
 export const generateStaticParams = async () => {
-  return []
-}
+  return [];
+};
 
 export const generateMetadata = async ({ params }) => {
   const { slug } = await params;
@@ -22,7 +22,9 @@ export const generateMetadata = async ({ params }) => {
 
     const blogRow = blogResult.rows[0];
 
-    const tagsResult = await getBlogTagsCached(blogRow[columnMap.blogResult["id"]]);
+    const tagsResult = await getBlogTagsCached(
+      blogRow[columnMap.blogResult["id"]],
+    );
     columnMap.tagsResult = Object.fromEntries(
       tagsResult.columns.map((v, i) => [v, i]),
     );
@@ -38,77 +40,71 @@ export const generateMetadata = async ({ params }) => {
       keywords: [],
     };
   }
-}
+};
 
 const BlogPostPage = async ({ params }) => {
   const { slug } = await params;
 
-  try {
-    const columnMap = {};
+  const columnMap = {};
 
-    const blogResult = await getBlogCached(slug);
-    columnMap.blogResult = Object.fromEntries(
-      blogResult.columns.map((v, i) => [v, i]),
-    );
+  const blogResult = await getBlogCached(slug);
+  columnMap.blogResult = Object.fromEntries(
+    blogResult.columns.map((v, i) => [v, i]),
+  );
 
-    const blogRow = blogResult.rows[0];
+  const blogRow = blogResult.rows[0];
 
-    const content = blogRow[columnMap.blogResult["content"]];
+  const content = blogRow[columnMap.blogResult["content"]];
 
-    const tagsResult = await getBlogTagsCached(blogRow[columnMap.blogResult["id"]]);
-    columnMap.tagsResult = Object.fromEntries(
-      tagsResult.columns.map((v, i) => [v, i]),
-    );
+  const tagsResult = await getBlogTagsCached(
+    blogRow[columnMap.blogResult["id"]],
+  );
+  columnMap.tagsResult = Object.fromEntries(
+    tagsResult.columns.map((v, i) => [v, i]),
+  );
 
-    return (
-      <div className={`content-container ${styles.page}`}>
-        <div className="content">
-          <header>
-            <h1>{blogRow[columnMap.blogResult["title"]]}</h1>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                fontSize: "0.875rem",
-              }}
-            >
-              {tagsResult.rows.map((tagRow) => (
-                <span
-                  key={tagRow[columnMap.tagsResult["title"]]}
-                  className="tag"
-                >
-                  {tagRow[columnMap.tagsResult["title"]]}
-                </span>
-              ))}
-            </div>
-          </header>
-          <main dangerouslySetInnerHTML={{ __html: content }} />
-          <footer>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-              }}
-            >
-              <Image
-                src="/favicon.ico"
-                alt="Profile picture"
-                width={32}
-                height={32}
-              />
-              <p>Tarun Sri Sai</p>
-            </div>
-            <p>{`Last edited on: ${new Date(blogRow[columnMap.blogResult["created_at"]] * 1000)}`}</p>
-          </footer>
-        </div>
+  return (
+    <div className={`content-container ${styles.page}`}>
+      <div className="content">
+        <header>
+          <h1>{blogRow[columnMap.blogResult["title"]]}</h1>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              fontSize: "0.875rem",
+            }}
+          >
+            {tagsResult.rows.map((tagRow) => (
+              <span key={tagRow[columnMap.tagsResult["title"]]} className="tag">
+                {tagRow[columnMap.tagsResult["title"]]}
+              </span>
+            ))}
+          </div>
+        </header>
+        <main dangerouslySetInnerHTML={{ __html: content }} />
+        <footer>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+            }}
+          >
+            <Image
+              src="/favicon.ico"
+              alt="Profile picture"
+              width={32}
+              height={32}
+            />
+            <p>Tarun Sri Sai</p>
+          </div>
+          <p>{`Last edited on: ${new Date(blogRow[columnMap.blogResult["created_at"]] * 1000)}`}</p>
+        </footer>
       </div>
-    );
-  } catch (error) {
-    console.error(`error occurred while loading the blog: ${error}`);
-    notFound();
-  }
+    </div>
+  );
 };
 
 export default BlogPostPage;
