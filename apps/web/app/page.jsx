@@ -21,8 +21,8 @@ const Home = () => {
 
         <div className="content">
           <p>
-            I solve lazy problems with lazy code, and sometimes it's probably
-            useful to someone else.
+            {"I solve lazy problems with lazy code, and sometimes it's "}
+            probably useful to someone else.
           </p>
 
           <blockquote>
@@ -35,12 +35,16 @@ const Home = () => {
             </footer>
           </blockquote>
 
-          <p>
-            Check out my <Link href={"/blog"}>blog</Link> for some slop-free
-            content, or you can check out my{" "}
-            <a href="https://github.com/tarun-sri-sai">GitHub</a> for some
-            sloppy code.
-          </p>
+          <ul>
+            <li>
+              Check out my <Link href={"/blog"}>blog</Link> for some slop-free
+              content.
+            </li>
+            <li>
+              Check out my <a href="https://github.com/tarun-sri-sai">GitHub</a>{" "}
+              for some sloppy code.
+            </li>
+          </ul>
         </div>
       </div>
     </main>
