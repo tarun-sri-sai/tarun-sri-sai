@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { getBlogCached, getBlogTagsCached } from "@/lib/db/blog";
+import { getBlogCached, getBlogTagsCached, getContactCached } from "@/lib/db/blog";
 import styles from "./page.module.css";
 
 export const revalidate = 86400;
@@ -63,6 +63,15 @@ const BlogPostPage = async ({ params }) => {
     tagsResult.columns.map((v, i) => [v, i]),
   );
 
+  const contactResult = await getContactCached();
+  columnMap.contactResult = Object.fromEntries(
+    contactResult.columns.map((v, i) => [v, i]),
+  );
+
+  const email = contactResult.rows.find(
+    (row) => row[columnMap.contactResult["attr_name"]] === "email",
+  )?.[columnMap.contactResult["attr_value"]];
+
   return (
     <div className={`content-container ${styles.page}`}>
       <div className="content">
@@ -98,7 +107,7 @@ const BlogPostPage = async ({ params }) => {
               width={32}
               height={32}
             />
-            <p>Tarun Sri Sai</p>
+            <a href={`mailto:${email}`}>Tarun Sri Sai</a>
           </div>
           <p>{`Last edited on: ${new Date(blogRow[columnMap.blogResult["created_at"]] * 1000)}`}</p>
         </footer>
