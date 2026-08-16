@@ -22,7 +22,7 @@ export const up = async (client) => {
 
     PRIMARY KEY (blog_id, created_at),
     FOREIGN KEY (blog_id) REFERENCES blogs(id)
-  );`);
+  ) WITHOUT ROWID;`);
 
   await client.execute(
     `CREATE INDEX IF NOT EXISTS blog_history_blog_id_idx ON blog_history(blog_id);`,
@@ -43,7 +43,7 @@ export const up = async (client) => {
     PRIMARY KEY (tag_id, blog_id),
     FOREIGN KEY (tag_id) REFERENCES tags(id),
     FOREIGN KEY (blog_id) REFERENCES blogs(id)
-  );`);
+  ) WITHOUT ROWID;`);
 };
 
 /**
