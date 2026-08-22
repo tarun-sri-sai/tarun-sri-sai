@@ -14,3 +14,6 @@ build/
 
 # ignore vercel directory
 .vercel
+
+# ignore pnpm store
+.pnpm-store/
