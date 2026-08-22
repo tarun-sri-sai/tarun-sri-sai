@@ -19,7 +19,8 @@
   },
   "devDependencies": {
     "prettier": "^3.9.5",
-    "prettier-plugin-sort-json": "^4.2.0"
+    "prettier-plugin-sort-json": "^4.2.0",
+    "vercel": "^59.3.0"
   },
   "type": "module",
   "dependencies": {
