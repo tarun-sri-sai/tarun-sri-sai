@@ -69,10 +69,3 @@ a:hover {
     width: 90%;
   }
 }
-
-.tag {
-  background-color: var(--color-scheme-border);
-  color: var(--color-scheme-primary-text);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-}

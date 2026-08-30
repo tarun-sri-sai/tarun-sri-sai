@@ -1,0 +1,16 @@
+.tags {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font: 0.875rem;
+}
+
+.tag {
+  background-color: var(--color-scheme-border);
+  color: var(--color-scheme-primary-text);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+
+  display: flex;
+  gap: 2rem;
+}

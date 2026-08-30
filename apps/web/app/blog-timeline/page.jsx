@@ -1,30 +1,29 @@
 import Link from "next/link";
-import { getRecentBlogsCached } from "@/lib/db/blog";
+import { getBlogHistorySlugsCached } from "@/lib/db/blog-history";
 import ListingPageHeader from "@/components/ListingPageHeader/ListingPageHeader";
 
 export const revalidate = 86400;
 
 export const metadata = {
-  title: "Tarun Sri Sai - Blog",
-  description:
-    "Welcome to my blog! I write about software, take it or leave it.",
+  title: "Tarun Sri Sai - Blog Timeline",
+  description: "View all blog articles by slug in chronological history.",
 };
 
-const BlogPage = async () => {
-  const recentBlogsResult = await getRecentBlogsCached();
+const BlogTimelinePage = async () => {
+  const slugsResult = await getBlogHistorySlugsCached();
   const columnMap = Object.fromEntries(
-    recentBlogsResult.columns.map((v, i) => [v, i]),
+    slugsResult.columns.map((v, i) => [v, i]),
   );
 
   return (
     <div className="content-container">
-      <ListingPageHeader heading={"Welcome to my blog!"} />
+      <ListingPageHeader heading="My blog timeline" />
       <main className="content">
         <section>
-          <h2>Recent</h2>
+          <h2>Articles</h2>
 
           <ul>
-            {[...recentBlogsResult.rows]
+            {[...slugsResult.rows]
               .sort(
                 (a, b) =>
                   new Date(b[columnMap["created_at"]]) -
@@ -32,8 +31,8 @@ const BlogPage = async () => {
               )
               .map((r) => (
                 <li key={r[columnMap["slug"]]}>
-                  <Link href={`/blog/${r[columnMap["slug"]]}`}>
-                    {r[columnMap["title"]]}
+                  <Link href={`/blog-timeline/${r[columnMap["slug"]]}`}>
+                    {`${r[columnMap["slug"]]}`}
                   </Link>
                 </li>
               ))}
@@ -44,4 +43,4 @@ const BlogPage = async () => {
   );
 };
 
-export default BlogPage;
+export default BlogTimelinePage;
