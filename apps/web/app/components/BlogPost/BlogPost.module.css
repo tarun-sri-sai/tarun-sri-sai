@@ -1,10 +1,14 @@
-.page main p {
+.post main p {
   text-align: justify;
 }
 
 @media (max-width: 768px) {
-  .page iframe {
+  .post iframe {
     width: 100%;
     max-height: 200px;
   }
+}
+
+.lastEdited {
+  text-align: right;
 }

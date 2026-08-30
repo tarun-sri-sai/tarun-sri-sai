@@ -87,18 +87,26 @@ const getBlogTags = async (blogId) => {
     args: [blogId],
   });
 
-  return result;
+  const columnMap = Object.fromEntries(result.columns.map((v, i) => [v, i]));
+
+  return result.rows.map((tr) => tr[columnMap["title"]]);
 };
 
 export const getBlogTagsCached = cached(getBlogTags);
 
-const getContact = async () => {
+const getEmail = async () => {
   const db = getDb();
   const result = await db.execute(`
     SELECT * FROM contact;
   `);
 
-  return result;
+  const columnMap = Object.fromEntries(result.columns.map((v, i) => [v, i]));
+
+  const email = result.rows.find(
+    (row) => row[columnMap["attr_name"]] === "email",
+  )?.[columnMap["attr_value"]];
+
+  return email;
 };
 
-export const getContactCached = cached(getContact);
+export const getEmailCached = cached(getEmail);

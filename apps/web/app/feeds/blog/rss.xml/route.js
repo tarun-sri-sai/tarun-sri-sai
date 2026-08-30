@@ -4,9 +4,7 @@ export const revalidate = 86400;
 
 export const GET = async () => {
   const result = await getRecentBlogsCached();
-  const columnMap = Object.fromEntries(
-    result.columns.map((v, i) => [v, i]),
-  );
+  const columnMap = Object.fromEntries(result.columns.map((v, i) => [v, i]));
 
   const blogs = [...result.rows]
     .map((r) => ({
@@ -14,9 +12,7 @@ export const GET = async () => {
       title: r[columnMap["title"]],
       created_at: new Date(r[columnMap["created_at"]] * 1000).toISOString(),
     }))
-    .sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at),
-    );
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -44,7 +40,7 @@ ${blogs
       "Content-Type": "application/rss+xml; charset=utf-8",
     },
   });
-}
+};
 
 const escapeXml = (str) => {
   return str
@@ -53,4 +49,4 @@ const escapeXml = (str) => {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
-}
+};
