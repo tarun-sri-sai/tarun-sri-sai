@@ -12,9 +12,9 @@ export const generateMetadata = async ({ params }) => {
       blogResult.columns.map((v, i) => [v, i]),
     );
 
-    const blogRow = blogResult.rows.filter((br) => {
-      br[columnMap["created_at"]] == createdAt;
-    })[0];
+    const blogRow = blogResult.rows.filter(
+      (br) => br[columnMap["created_at"]] == createdAt,
+    )[0];
 
     const tagsResult = await getBlogTagsCached(blogRow[columnMap["id"]]);
 
