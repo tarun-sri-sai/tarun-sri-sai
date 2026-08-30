@@ -12,7 +12,7 @@ export const generateMetadata = async ({ params }) => {
       blogResult.columns.map((v, i) => [v, i]),
     );
 
-    const blogRow = blog.rows.filter((br) => {
+    const blogRow = blogResult.rows.filter((br) => {
       br[columnMap["created_at"]] == createdAt;
     })[0];
 
