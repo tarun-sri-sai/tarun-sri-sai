@@ -6,10 +6,6 @@ import styles from "./page.module.css";
 
 export const revalidate = 86400;
 
-export const generateStaticParams = async () => {
-  return [];
-};
-
 export const generateMetadata = async ({ params }) => {
   const { slug } = await params;
 
