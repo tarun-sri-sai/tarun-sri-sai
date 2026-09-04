@@ -17,5 +17,5 @@ export async function up(client) {
  * @returns { Promise<void> }
  */
 export async function down(client) {
-  await client.execute(`DROP TABLE IF EXISTS contact`);
+  await client.execute(`DROP TABLE IF EXISTS contact;`);
 }

@@ -52,9 +52,9 @@ export const up = async (client) => {
  * @returns { Promise<void> }
  */
 export const down = async (client) => {
-  await client.execute(`DROP TABLE IF EXISTS blog_tags`);
+  await client.execute(`DROP TABLE IF EXISTS blog_tags;`);
 
-  await client.execute(`DROP TABLE IF EXISTS tags`);
+  await client.execute(`DROP TABLE IF EXISTS tags;`);
 
   await client.execute(`DROP INDEX IF EXISTS blog_history_created_at_idx;`);
 
