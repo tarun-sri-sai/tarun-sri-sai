@@ -7,7 +7,7 @@ export const up = async (client) => {
   await client.execute(`CREATE TABLE IF NOT EXISTS blogs (
     id INTEGER PRIMARY KEY,
     slug TEXT UNIQUE NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT (unixepoch('now'))
+    created_at INTEGER NOT NULL DEFAULT (unixepoch('now'))
   );`);
 
   await client.execute(
@@ -16,7 +16,7 @@ export const up = async (client) => {
 
   await client.execute(`CREATE TABLE IF NOT EXISTS blog_history (
     blog_id INTEGER NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT (unixepoch('now')),
+    created_at INTEGER NOT NULL DEFAULT (unixepoch('now')),
     title TEXT NOT NULL,
     content TEXT NOT NULL,
 
@@ -52,9 +52,9 @@ export const up = async (client) => {
  * @returns { Promise<void> }
  */
 export const down = async (client) => {
-  await client.execute(`DROP TABLE IF EXISTS blog_tags`);
+  await client.execute(`DROP TABLE IF EXISTS blog_tags;`);
 
-  await client.execute(`DROP TABLE IF EXISTS tags`);
+  await client.execute(`DROP TABLE IF EXISTS tags;`);
 
   await client.execute(`DROP INDEX IF EXISTS blog_history_created_at_idx;`);
 
