@@ -7,10 +7,10 @@ services:
     env_file:
       - .env
     networks:
-      - redis-net
+      - redis_net
     volumes:
       - ${PWD}:/app
     working_dir: /app
 networks:
-  redis-net:
+  redis_net:
     external: true
